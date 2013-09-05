@@ -1,4 +1,4 @@
-package uk.co.thomasc;
+package uk.co.thomasc.lvf;
 
 public class Stats extends Thread {
 	

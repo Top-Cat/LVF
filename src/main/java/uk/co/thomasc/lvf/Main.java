@@ -1,4 +1,4 @@
-package uk.co.thomasc;
+package uk.co.thomasc.lvf;
 
 import java.io.BufferedReader;
 import java.io.IOException;

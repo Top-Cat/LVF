@@ -1,4 +1,4 @@
-package uk.co.thomasc;
+package uk.co.thomasc.lvf;
 
 import java.util.Calendar;
 import java.util.Comparator;

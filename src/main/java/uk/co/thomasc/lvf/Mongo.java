@@ -1,4 +1,4 @@
-package uk.co.thomasc;
+package uk.co.thomasc.lvf;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
