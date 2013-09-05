@@ -28,4 +28,46 @@
 			<version>4.2.5</version>
 		</dependency>
 	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.google.code.maven-replacer-plugin</groupId>
+				<artifactId>replacer</artifactId>
+				<version>1.5.2</version>
+				<executions>
+					<execution>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>replace</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<file>target/classes/login.json</file>
+					<replacements>
+						<replacement>
+							<token>%mongo_user%</token>
+							<value>${mongo.user}</value>
+						</replacement>
+						<replacement>
+							<token>%mongo_pass%</token>
+							<value>${mongo.pass}</value>
+						</replacement>
+						<replacement>
+							<token>%mongo_db%</token>
+							<value>${mongo.db}</value>
+						</replacement>
+						<replacement>
+							<token>%tfl_user%</token>
+							<value>${tfl.user}</value>
+						</replacement>
+						<replacement>
+							<token>%tfl_pass%</token>
+							<value>${tfl.pass}</value>
+						</replacement>
+					</replacements>
+				</configuration>
+			</plugin>
+		 </plugins>
+	</build>
 </project>
