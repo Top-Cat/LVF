@@ -1,0 +1,11 @@
+{
+	mongo: {
+		user: '%mongo_user%',
+		pass: '%mongo_pass%',
+		db: '%mongo_db%'
+	},
+	tfl: {
+		user: '%tfl_user%',
+		pass: '%tfl_pass%'
+	}
+}

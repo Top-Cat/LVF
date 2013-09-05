@@ -1,0 +1,26 @@
+package uk.co.thomasc;
+
+import java.util.Date;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+
+@AllArgsConstructor
+public class Prediction {
+
+	@Getter @Setter private String route;
+	@Getter @Setter private String lineid;
+	@Getter @Setter private Date time;
+	@Getter @Setter private String stop;
+	@Getter @Setter private int dirid;
+	@Getter @Setter private String dest;
+	
+	public DBObject toDbObject() {
+		return new BasicDBObject().append("route", route).append("line_id", lineid).append("last_seen", time).append("nearest_stop", stop).append("dirid", dirid).append("destination", dest);
+	}
+	
+}
