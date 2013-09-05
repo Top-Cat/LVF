@@ -98,6 +98,8 @@ public class Bus {
 		}
 		pred_update.put(tfl.getStop(), pred);
 		predictions.offer(pred);
+		
+		updateQueue();
 	}
 	
 	private Date getHead() {
