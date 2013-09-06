@@ -76,5 +76,6 @@ public class Main {
 				}
 			}
 		}
+		stats.finish();
 	}
 }

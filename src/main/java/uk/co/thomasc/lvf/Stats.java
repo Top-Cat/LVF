@@ -2,6 +2,7 @@ package uk.co.thomasc.lvf;
 
 public class Stats extends Thread {
 	
+	private boolean running = true;
 	private int rows = 0;
 	
 	public Stats() {
@@ -14,7 +15,7 @@ public class Stats extends Thread {
 	
 	@Override
 	public void run() {
-		while (true) {
+		while (running) {
 			try {
 				sleep(1000);
 				
@@ -25,6 +26,10 @@ public class Stats extends Thread {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	public void finish() {
+		running = false;
 	}
 	
 }
