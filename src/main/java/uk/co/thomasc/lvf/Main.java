@@ -34,43 +34,45 @@ public class Main {
 		JsonObject login = (JsonObject) parser.parse(new InputStreamReader(this.getClass().getResourceAsStream("/login.json")));
 		mongo = new Mongo(login);
 		
-		DefaultHttpClient client = new DefaultHttpClient();
-		Credentials defaultcreds = new UsernamePasswordCredentials(((JsonObject) login.get("tfl")).get("user").getAsString(), ((JsonObject) login.get("tfl")).get("pass").getAsString());
-		client.getCredentialsProvider().setCredentials(new AuthScope("countdown.api.tfl.gov.uk", 80), defaultcreds);
-		
-		DBCursor c = mongo.find("lvf_history").sort(new BasicDBObject("vid", 1));
-		while (c.hasNext()) {
-			DBObject r = c.next();
-			Bus.getFromVid((Integer) r.get("vid")).initHistory(r);;
-		}
-		
-		while (true) {
-			InputStream is = null;
-			try {
-				HttpGet httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime");
-				HttpResponse response = client.execute(httpget);
-				is = response.getEntity().getContent();
-				BufferedReader stream = new BufferedReader(new InputStreamReader(is));
-				
-				String inputLine;
-				while ((inputLine = stream.readLine()) != null) {
-					TFL tfl = new TFL(parser.parse(inputLine));
-					stats.incRows();
-					if (tfl.getType() == 1) {
-						DBObject query = new BasicDBObject().append("vid", tfl.getVid()).append("stopid", tfl.getStop()).append("visit", tfl.getVisit()).append("destination", tfl.getDest());
-						DBObject update = new BasicDBObject("$set", new BasicDBObject().append("route", tfl.getRoute()).append("line_id", tfl.getLineid()).append("prediction", tfl.getTime()).append("dirid", tfl.getDirid()));
-						mongo.update("lvf_predictions", query, update, true, false, WriteConcern.UNACKNOWLEDGED);
-						
-						Bus.getFromVid(tfl.getVid()).newData(tfl);
+		if (mongo.isMaster()) {
+			DefaultHttpClient client = new DefaultHttpClient();
+			Credentials defaultcreds = new UsernamePasswordCredentials(((JsonObject) login.get("tfl")).get("user").getAsString(), ((JsonObject) login.get("tfl")).get("pass").getAsString());
+			client.getCredentialsProvider().setCredentials(new AuthScope("countdown.api.tfl.gov.uk", 80), defaultcreds);
+			
+			DBCursor c = mongo.find("lvf_history").sort(new BasicDBObject("vid", 1));
+			while (c.hasNext()) {
+				DBObject r = c.next();
+				Bus.getFromVid((Integer) r.get("vid")).initHistory(r);;
+			}
+			
+			while (true) {
+				InputStream is = null;
+				try {
+					HttpGet httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime");
+					HttpResponse response = client.execute(httpget);
+					is = response.getEntity().getContent();
+					BufferedReader stream = new BufferedReader(new InputStreamReader(is));
+					
+					String inputLine;
+					while ((inputLine = stream.readLine()) != null) {
+						TFL tfl = new TFL(parser.parse(inputLine));
+						stats.incRows();
+						if (tfl.getType() == 1) {
+							DBObject query = new BasicDBObject().append("vid", tfl.getVid()).append("stopid", tfl.getStop()).append("visit", tfl.getVisit()).append("destination", tfl.getDest());
+							DBObject update = new BasicDBObject("$set", new BasicDBObject().append("route", tfl.getRoute()).append("line_id", tfl.getLineid()).append("prediction", tfl.getTime()).append("dirid", tfl.getDirid()));
+							mongo.update("lvf_predictions", query, update, true, false, WriteConcern.UNACKNOWLEDGED);
+							
+							Bus.getFromVid(tfl.getVid()).newData(tfl);
+						}
 					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally {
-				if (is != null) {
-					try {
-						is.close();
-					} catch (IOException e) {}
+				} catch (Exception e) {
+					e.printStackTrace();
+				} finally {
+					if (is != null) {
+						try {
+							is.close();
+						} catch (IOException e) {}
+					}
 				}
 			}
 		}

@@ -5,6 +5,12 @@
 	<version>dev-SNAPSHOT</version>
 	<name>LVF Pre-Processor</name>
 	<description>Reads the TFL stream and updates the database</description>
+	<repositories>
+		<repository>
+			<id>thomasc-repo</id>
+			<url>http://repo.thomasc.co.uk</url>
+		</repository>
+	</repositories>
 	<dependencies>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>

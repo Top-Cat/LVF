@@ -1,8 +1,11 @@
 package uk.co.thomasc.lvf;
 
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+
+import lombok.Getter;
 
 import com.google.gson.JsonObject;
 import com.mongodb.DB;
@@ -17,6 +20,7 @@ import com.mongodb.WriteResult;
 public class Mongo {
 	
 	private DB buspicsDB;
+	@Getter private boolean master;
 
 	public Mongo(JsonObject login) {
 		System.out.println("Connecting!");
@@ -30,6 +34,8 @@ public class Mongo {
 			
 			buspicsDB = mongoClient.getDB(((JsonObject) login.get("mongo")).get("db").getAsString());
 			buspicsDB.authenticate(((JsonObject) login.get("mongo")).get("user").getAsString(), ((JsonObject) login.get("mongo")).get("pass").getAsString().toCharArray());
+			
+			master = InetAddress.getByName(mongoClient.getReplicaSetStatus().getMaster().getHost()).isLoopbackAddress();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
