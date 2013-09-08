@@ -42,17 +42,10 @@ public class Main {
 			Credentials defaultcreds = new UsernamePasswordCredentials(((JsonObject) login.get("tfl")).get("user").getAsString(), ((JsonObject) login.get("tfl")).get("pass").getAsString());
 			client.getCredentialsProvider().setCredentials(new AuthScope("countdown.api.tfl.gov.uk", 80), defaultcreds);
 			
-			Calendar cal = new GregorianCalendar();
-			cal.setTime(new Date());
-			cal.set(Calendar.HOUR_OF_DAY, 0);
-			cal.set(Calendar.MINUTE, 0);
-			cal.set(Calendar.SECOND, 0);
-			cal.set(Calendar.MILLISECOND, 0);
-			
-			DBCursor c = mongo.find("lvf_history", new BasicDBObject("date", new BasicDBObject("$gte", cal.getTime()))).sort(new BasicDBObject("vid", 1));
+			DBCursor c = mongo.find("lvf_history", new BasicDBObject("date", new BasicDBObject("$gte", midnight()))).sort(new BasicDBObject("vid", 1));
 			while (c.hasNext()) {
 				DBObject r = c.next();
-				Bus.getFromVid((Integer) r.get("vid")).initHistory(r);;
+				Bus.getFromUvi((Integer) r.get("uvi")).initHistory(r);
 			}
 			
 			while (true) {
@@ -87,5 +80,19 @@ public class Main {
 			}
 		}
 		stats.finish();
+	}
+	
+	public static Date midnight() {
+		return midnight(new Date());
+	}
+
+	public static Date midnight(Date date) {
+		Calendar cal = new GregorianCalendar();
+		cal.setTime(date);
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		return cal.getTime();
 	}
 }

@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.Getter;
 
 import com.google.gson.JsonObject;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -115,6 +116,15 @@ public class Mongo {
 		int id = (int) (Math.random() * count);
 		
 		return buspicsDB.getCollection(collection).find().skip(id).next();
+	}
+
+	public int incCounter(String counter) {
+		DBObject obj = buspicsDB.getCollection("counters").findAndModify(new BasicDBObject("_id", counter), new BasicDBObject("_id", 0), null, false, new BasicDBObject("$inc", new BasicDBObject("seq", 1)), true, false);
+		return (Integer) obj.get("seq");
+	}
+
+	public void debug(String string) {
+		insert("lvf_audit", new BasicDBObject().append("text", string).append("level", false));
 	}
 
 }
