@@ -4,6 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -39,7 +42,14 @@ public class Main {
 			Credentials defaultcreds = new UsernamePasswordCredentials(((JsonObject) login.get("tfl")).get("user").getAsString(), ((JsonObject) login.get("tfl")).get("pass").getAsString());
 			client.getCredentialsProvider().setCredentials(new AuthScope("countdown.api.tfl.gov.uk", 80), defaultcreds);
 			
-			DBCursor c = mongo.find("lvf_history").sort(new BasicDBObject("vid", 1));
+			Calendar cal = new GregorianCalendar();
+			cal.setTime(new Date());
+			cal.set(Calendar.HOUR_OF_DAY, 0);
+			cal.set(Calendar.MINUTE, 0);
+			cal.set(Calendar.SECOND, 0);
+			cal.set(Calendar.MILLISECOND, 0);
+			
+			DBCursor c = mongo.find("lvf_history", new BasicDBObject("date", new BasicDBObject("$gte", cal.getTime()))).sort(new BasicDBObject("vid", 1));
 			while (c.hasNext()) {
 				DBObject r = c.next();
 				Bus.getFromVid((Integer) r.get("vid")).initHistory(r);;
