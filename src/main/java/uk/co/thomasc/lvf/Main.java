@@ -51,6 +51,8 @@ public class Main {
 				}
 			}
 			
+			System.out.println("Finished Loading");
+			
 			while (true) {
 				InputStream is = null;
 				try {
