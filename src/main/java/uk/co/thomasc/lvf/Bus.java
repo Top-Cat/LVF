@@ -166,10 +166,10 @@ public class Bus {
 			} else {
 				doInsert(tfl, getNewVid(vid));
 			}
-		} else if (tfl.getReg() != reg) {
+		} else if (!tfl.getReg().equals(reg)) {
 			String tReg = tfl.getReg().replace(".", "");
 			// Registration change
-			if (!keep || tReg != reg) {
+			if (!keep || tReg.equals(reg)) {
 				DBObject old = Main.mongo.findAndModify("lvf_vehicles", new BasicDBObject("cdreg", reg), new BasicDBObject("$unset", new BasicDBObject("vid", 1)));
 				Main.mongo.debug("Registration already exists in vehicle data - VehicleId = " + old.get("uvi") + ", reg = " + tfl.getReg() + ", old reg = " + this.reg + ", fleetnumber = " + old.get("fnum"));
 				Main.mongo.update("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject("$set", new BasicDBObject("cdreg", tfl.getReg())));
