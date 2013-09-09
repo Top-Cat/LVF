@@ -45,7 +45,7 @@ public class Main {
 			DBCursor c = mongo.find("lvf_history", new BasicDBObject("date", new BasicDBObject("$gte", midnight()))).sort(new BasicDBObject("vid", 1));
 			while (c.hasNext()) {
 				DBObject r = c.next();
-				Bus bus = Bus.getFromUvi((Integer) r.get("uvi"));
+				Bus bus = Bus.getFromUvi((Integer) r.get("vid"));
 				if (bus != null) {
 					bus.initHistory(r);
 				}
