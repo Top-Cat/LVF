@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
 
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
@@ -20,6 +21,18 @@ public class Bus {
 			return o1.getHead().before(o2.getHead()) ? -1 : 1;
 		}
 	});
+	
+	public static Bus getFromUvi(int uvi) {
+		DBObject vehicle = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("uvi", uvi), new BasicDBObject().append("cdreg", 1).append("keep", 1).append("vid", 1));
+		if (vehicle != null) {
+			int vid = (Integer) vehicle.get("vid");
+			if (!singleton.containsKey(vid)) {
+				singleton.put(vid, new Bus(uvi, vehicle));
+			}
+			return getFromVid(vid);
+		}
+		return null;
+	}
 
 	public static Bus getFromVid(int vid) {
 		if (!singleton.containsKey(vid)) {
@@ -36,6 +49,11 @@ public class Bus {
 	}
 
 	private int vid;
+	private int uvi;
+	private String reg;
+	private boolean keep = false;
+	private boolean exists = true;
+	
 	private Map<String, Map<String, Map<String, Map<String, Date>>>> history = new HashMap<String, Map<String, Map<String, Map<String, Date>>>>();
 	private PriorityQueue<Prediction> predictions = new PriorityQueue<Prediction>(11, new Comparator<Prediction>() {
 		public int compare(Prediction o1, Prediction o2) {
@@ -44,12 +62,38 @@ public class Bus {
 	});
 	private Map<String, Prediction> pred_update = new HashMap<String, Prediction>();
 	
-	public Bus(int vid) {
+	private Bus(int vid) {
 		this.vid = vid;
+		DBObject vehicle = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject().append("cdreg", 1).append("keep", 1).append("uvi", 1));
+		if (vehicle != null) {
+			this.reg = (String) vehicle.get("cdreg");
+			this.keep = (Boolean) vehicle.get("keep");
+			this.uvi = (Integer) vehicle.get("uvi");
+		} else {
+			// Vehicle doesn't exist!
+			exists = false;
+		}
+	}
+	
+	private Bus(int uvi, DBObject vehicle) {
+		this.uvi = uvi;
+		this.reg = (String) vehicle.get("cdreg");
+		this.keep = (Boolean) vehicle.get("keep");
+		this.vid = (Integer) vehicle.get("vid");
+	}
+
+	private int getNewVid(int guess) {
+		while (Main.mongo.exists("lvf_vehicles", new BasicDBObject("uvi", guess))) {
+			guess = Main.mongo.incCounter("uvi");
+		}
+		return guess;
 	}
 	
 	public void newData(TFL tfl) {
 		checkQueue();
+		
+		checkVehicle(tfl);
+		
 		BasicDBObject update = new BasicDBObject();
 		
 		if (!history.containsKey(tfl.getKeytime())) {
@@ -80,7 +124,7 @@ public class Bus {
 			cal.set(Calendar.MINUTE, 0);
 			cal.set(Calendar.SECOND, 0);
 			cal.set(Calendar.MILLISECOND, 0);
-			Main.mongo.update("lvf_history", new BasicDBObject().append("vid", this.vid).append("date", cal.getTime()).append("lineid", tfl.getLineid()), new BasicDBObject("$set", update), true, false, WriteConcern.UNACKNOWLEDGED);
+			Main.mongo.update("lvf_history", new BasicDBObject().append("vid", this.uvi).append("date", cal.getTime()).append("lineid", tfl.getLineid()), new BasicDBObject("$set", update), true, false, WriteConcern.UNACKNOWLEDGED);
 		}
 		
 		Prediction pred;
@@ -102,6 +146,91 @@ public class Bus {
 		updateQueue();
 	}
 	
+	private void checkVehicle(TFL tfl) {
+		if (!exists) {
+			DBObject old = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()));
+			
+			if (old != null) {
+				int uvi = getNewVid(vid);
+				if ((Boolean) old.get("pre")) {
+					// Pre-populated
+					Main.mongo.debug("New registration already in database (1prepopuated), - Old Uvi = " + old.get("uvi") + ", New VehicleId = " + vid + ", reg = " + tfl.getReg() + ", fleetnumber = " + old.get("fnum"));
+					Main.mongo.update("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", uvi)));
+					this.reg = tfl.getReg();
+					this.uvi = uvi;
+					this.keep = true;
+				} else {
+					// Registration changing vids
+					preEntered(tfl, (Integer) old.get("uvi"), uvi);
+				}
+			} else {
+				doInsert(tfl, getNewVid(vid));
+			}
+		} else if (tfl.getReg() != reg) {
+			String tReg = tfl.getReg().replace(".", "");
+			// Registration change
+			if (!keep || tReg != reg) {
+				DBObject old = Main.mongo.findAndModify("lvf_vehicles", new BasicDBObject("cdreg", reg), new BasicDBObject("$unset", new BasicDBObject("vid", 1)));
+				Main.mongo.debug("Registration already exists in vehicle data - VehicleId = " + old.get("uvi") + ", reg = " + tfl.getReg() + ", old reg = " + this.reg + ", fleetnumber = " + old.get("fnum"));
+				Main.mongo.update("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject("$set", new BasicDBObject("cdreg", tfl.getReg())));
+				this.reg = tfl.getReg();
+			} else {
+				int uvi = getNewVid(vid);
+				Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", this.uvi), new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1)));
+				
+				DBObject old = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()));
+				if (old != null) {
+					if ((Boolean) old.get("pre")) {
+						// Pre-populated :D
+						Main.mongo.debug("New registration already in database (2prepopuated), - Old Uvi = " + old.get("uvi") + ", New VehicleId = " + vid + ", reg = " + tfl.getReg() + ", fleetnumber = " + old.get("fnum"));
+						Main.mongo.update("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", uvi)));
+						this.uvi = uvi;
+					} else {
+						preEntered(tfl, (Integer) old.get("uvi"), uvi);
+					}
+				} else {
+					doInsert(tfl, uvi);
+				}
+			}
+		}
+	}
+
+	private void preEntered(TFL tfl, int oldUvi, int newUvi) {
+		Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", oldUvi), new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1).append("operator", 1).append("fnum", 1)));
+		
+		DBObject pre = Main.mongo.findOne("lvf_vehicles", new BasicDBObject().append("orig_reg", tfl.getReg()).append("pre", true));
+		if (pre != null) {
+			Main.mongo.debug("Found pre-entered data in vehicles table - Vid = " + vid + ", uvi = " + newUvi + ", reg = " + tfl.getReg() + ", operator = " + pre.get("operator") + ", fleetnumber = " + pre.get("fnum"));
+			Main.mongo.update("lvf_vehicles", new BasicDBObject().append("orig_reg", tfl.getReg()).append("pre", true), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", newUvi).append("keep", true).append("cdreg", tfl.getReg())));
+			this.reg = tfl.getReg();
+			this.keep = true;
+			this.uvi = newUvi;
+		} else {
+			doInsert(tfl, getNewVid(vid));
+		}
+	}
+
+	private void doInsert(TFL tfl, int uvi) {
+		Stats.event("insert_veh");
+		Main.mongo.debug("New entry in vehicles table - Vid = " + vid + " uvi = " + uvi + " Regns = " + tfl.getReg());
+		Main.mongo.insert(
+			"lvf_vehicles",
+			new BasicDBObject()
+				.append("cdreg", tfl.getReg())
+				.append("vid", vid)
+				.append("uvi", uvi)
+				.append("cur_reg", tfl.getReg())
+				.append("orig_reg", tfl.getReg())
+				.append("keep", false)
+				.append("operator", "UN")
+				.append("lists", new BasicDBList().add("new"))
+		);
+		this.exists = true;
+		this.uvi = uvi;
+		this.reg = tfl.getReg();
+		this.keep = false;
+	}
+
 	private Date getHead() {
 		return predictions.peek().getTime();
 	}
