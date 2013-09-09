@@ -16,6 +16,7 @@ import com.mongodb.WriteConcern;
 public class Bus {
 	
 	private static Map<Integer, Bus> singleton = new HashMap<Integer, Bus>();
+	private static Map<Integer, Bus> singletonUvi = new HashMap<Integer, Bus>();
 	private static PriorityQueue<Bus> queue = new PriorityQueue<Bus>(11, new Comparator<Bus>() {
 		public int compare(Bus o1, Bus o2) {
 			return o1.getHead().before(o2.getHead()) ? -1 : 1;
@@ -23,15 +24,7 @@ public class Bus {
 	});
 	
 	public static Bus getFromUvi(int uvi) {
-		DBObject vehicle = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("uvi", uvi), new BasicDBObject().append("cdreg", 1).append("keep", 1).append("vid", 1));
-		if (vehicle != null && vehicle.containsField("vid")) {
-			int vid = (Integer) vehicle.get("vid");
-			if (!singleton.containsKey(vid)) {
-				singleton.put(vid, new Bus(uvi, vehicle));
-			}
-			return getFromVid(vid);
-		}
-		return null;
+		return singletonUvi.get(uvi);
 	}
 
 	public static Bus getFromVid(int vid) {
@@ -74,12 +67,16 @@ public class Bus {
 			exists = false;
 		}
 	}
-	
-	private Bus(int uvi, DBObject vehicle) {
-		this.uvi = uvi;
+
+	public Bus(DBObject vehicle) {
+		this.vid = (Integer) vehicle.get("vid");
 		this.reg = (String) vehicle.get("cdreg");
 		this.keep = (Boolean) vehicle.get("keep");
-		this.vid = (Integer) vehicle.get("vid");
+		this.uvi = (Integer) vehicle.get("uvi");
+		singletonUvi.put(uvi, this);
+		if (!singleton.containsKey(vid)) {
+			singleton.put(vid, this);
+		}
 	}
 
 	private int getNewVid(int guess) {
