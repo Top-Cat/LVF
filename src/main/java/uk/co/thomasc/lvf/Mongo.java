@@ -124,7 +124,11 @@ public class Mongo {
 	}
 
 	public void debug(String string) {
-		insert("lvf_audit", new BasicDBObject().append("text", string).append("level", false));
+		insert("lvf_audit", new BasicDBObject().append("text", string).append("level", true));
+	}
+
+	public DBObject findAndModify(String collection, BasicDBObject query, BasicDBObject update) {
+		return buspicsDB.getCollection(collection).findAndModify(query, update);
 	}
 
 }
