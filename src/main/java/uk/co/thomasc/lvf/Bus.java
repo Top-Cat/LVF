@@ -91,39 +91,6 @@ public class Bus {
 		
 		checkVehicle(tfl);
 		
-		BasicDBObject update = new BasicDBObject();
-		
-		if (!history.containsKey(tfl.getKeytime())) {
-			history.put(tfl.getKeytime(), new HashMap<String, Map<String,Map<String,Date>>>());
-		}
-		if (!history.get(tfl.getKeytime()).containsKey(tfl.getRoute())) {
-			history.get(tfl.getKeytime()).put(tfl.getRoute(), new HashMap<String, Map<String,Date>>());
-		}
-		if (!history.get(tfl.getKeytime()).get(tfl.getRoute()).containsKey(tfl.getLineid())) {
-			history.get(tfl.getKeytime()).get(tfl.getRoute()).put(tfl.getLineid(), new HashMap<String, Date>());
-		}
-		
-		if (!history.get(tfl.getKeytime()).get(tfl.getRoute()).get(tfl.getLineid()).containsKey("first_seen") || history.get(tfl.getKeytime()).get(tfl.getRoute()).get(tfl.getLineid()).get("first_seen").after(tfl.getTime())) {
-			history.get(tfl.getKeytime()).get(tfl.getRoute()).get(tfl.getLineid()).put("first_seen", tfl.getTime());
-			update.append("first_seen", tfl.getTime());
-			update.append("route", tfl.getRoute());
-		}
-		if (!history.get(tfl.getKeytime()).get(tfl.getRoute()).get(tfl.getLineid()).containsKey("last_seen") || history.get(tfl.getKeytime()).get(tfl.getRoute()).get(tfl.getLineid()).get("last_seen").before(tfl.getTime())) {
-			history.get(tfl.getKeytime()).get(tfl.getRoute()).get(tfl.getLineid()).put("last_seen", tfl.getTime());
-			update.append("last_seen", tfl.getTime());
-			update.append("route", tfl.getRoute());
-		}
-		
-		if (!update.isEmpty()) {
-			Calendar cal = new GregorianCalendar();
-			cal.setTime(tfl.getTime());
-			cal.set(Calendar.HOUR_OF_DAY, 0);
-			cal.set(Calendar.MINUTE, 0);
-			cal.set(Calendar.SECOND, 0);
-			cal.set(Calendar.MILLISECOND, 0);
-			Main.mongo.update("lvf_history", new BasicDBObject().append("vid", this.uvi).append("date", cal.getTime()).append("lineid", tfl.getLineid()), new BasicDBObject("$set", update), true, false, WriteConcern.UNACKNOWLEDGED);
-		}
-		
 		Prediction pred;
 		if (pred_update.containsKey(tfl.getStop())) {
 			pred = pred_update.get(tfl.getStop());
@@ -132,10 +99,11 @@ public class Bus {
 			pred.setRoute(tfl.getRoute());
 			pred.setLineid(tfl.getLineid());
 			pred.setTime(tfl.getTime());
+			pred.setKeytime(tfl.getKeytime());
 			pred.setDirid(tfl.getDirid());
 			pred.setDest(tfl.getDest());
 		} else {
-			pred = new Prediction(tfl.getRoute(), tfl.getLineid(), tfl.getTime(), tfl.getStop(), tfl.getDirid(), tfl.getDest());
+			pred = new Prediction(tfl.getRoute(), tfl.getLineid(), tfl.getTime(), tfl.getKeytime(), tfl.getStop(), tfl.getDirid(), tfl.getDest());
 		}
 		pred_update.put(tfl.getStop(), pred);
 		predictions.offer(pred);
@@ -143,6 +111,41 @@ public class Bus {
 		updateQueue();
 	}
 	
+	private void updateHistory(String date, Date time, String route, String lineid) {
+		BasicDBObject update = new BasicDBObject();
+		
+		if (!history.containsKey(date)) {
+			history.put(date, new HashMap<String, Map<String,Map<String,Date>>>());
+		}
+		if (!history.get(date).containsKey(route)) {
+			history.get(date).put(route, new HashMap<String, Map<String,Date>>());
+		}
+		if (!history.get(date).get(route).containsKey(lineid)) {
+			history.get(date).get(route).put(lineid, new HashMap<String, Date>());
+		}
+		
+		if (!history.get(date).get(route).get(lineid).containsKey("first_seen") || history.get(date).get(route).get(lineid).get("first_seen").after(time)) {
+			history.get(date).get(route).get(lineid).put("first_seen", time);
+			update.append("first_seen", time);
+			update.append("route", route);
+		}
+		if (!history.get(date).get(route).get(lineid).containsKey("last_seen") || history.get(date).get(route).get(lineid).get("last_seen").before(time)) {
+			history.get(date).get(route).get(lineid).put("last_seen", time);
+			update.append("last_seen", time);
+			update.append("route", route);
+		}
+		
+		if (!update.isEmpty()) {
+			Calendar cal = new GregorianCalendar();
+			cal.setTime(time);
+			cal.set(Calendar.HOUR_OF_DAY, 0);
+			cal.set(Calendar.MINUTE, 0);
+			cal.set(Calendar.SECOND, 0);
+			cal.set(Calendar.MILLISECOND, 0);
+			Main.mongo.update("lvf_history", new BasicDBObject().append("vid", this.uvi).append("date", cal.getTime()).append("lineid", lineid), new BasicDBObject("$set", update), true, false, WriteConcern.UNACKNOWLEDGED);
+		}
+	}
+
 	private void checkVehicle(TFL tfl) {
 		if (!exists) {
 			DBObject old = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()));
@@ -242,7 +245,9 @@ public class Bus {
 		}
 		
 		if (!predictions.isEmpty()) {
-			Main.mongo.update("lvf_vehicles", new BasicDBObject("vid", this.vid), new BasicDBObject("$set", new BasicDBObject("whereseen", predictions.peek().toDbObject())), false, false, WriteConcern.UNACKNOWLEDGED);
+			Prediction pred = predictions.peek();
+			updateHistory(pred.getKeytime(), pred.getTime(), pred.getRoute(), pred.getLineid());
+			Main.mongo.update("lvf_vehicles", new BasicDBObject("vid", this.vid), new BasicDBObject("$set", new BasicDBObject("whereseen", pred.toDbObject())), false, false, WriteConcern.UNACKNOWLEDGED);
 			
 			queue.offer(this);
 		}

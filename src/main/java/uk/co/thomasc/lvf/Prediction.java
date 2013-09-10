@@ -15,6 +15,7 @@ public class Prediction {
 	@Getter @Setter private String route;
 	@Getter @Setter private String lineid;
 	@Getter @Setter private Date time;
+	@Getter @Setter private String keytime;
 	@Getter @Setter private String stop;
 	@Getter @Setter private int dirid;
 	@Getter @Setter private String dest;
