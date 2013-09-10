@@ -28,7 +28,10 @@ public class Stats extends Thread {
 			try {
 				sleep(1000);
 				
-				System.out.println("Rows: " + rows + "\r");
+				if (rows > 0) {
+					System.out.println("Rows: " + rows + "\r");
+					rows = 0;
+				}
 				
 				if (++i % 60 == 0) {
 					i = 0;
@@ -48,8 +51,6 @@ public class Stats extends Thread {
 						);
 					}
 				}
-				
-				rows = 0;
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
