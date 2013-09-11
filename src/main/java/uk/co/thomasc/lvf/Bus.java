@@ -213,6 +213,8 @@ public class Bus {
 	private void doInsert(TFL tfl, int uvi) {
 		Stats.event("insert_veh");
 		Main.mongo.debug("New entry in vehicles table - Vid = " + vid + " uvi = " + uvi + " Regns = " + tfl.getReg());
+		BasicDBList newlist = new BasicDBList();
+		newlist.add("new");
 		Main.mongo.insert(
 			"lvf_vehicles",
 			new BasicDBObject()
@@ -223,7 +225,7 @@ public class Bus {
 				.append("orig_reg", tfl.getReg())
 				.append("keep", false)
 				.append("operator", "UN")
-				.append("lists", new BasicDBList().add("new"))
+				.append("lists", newlist)
 		);
 		this.exists = true;
 		this.uvi = uvi;
