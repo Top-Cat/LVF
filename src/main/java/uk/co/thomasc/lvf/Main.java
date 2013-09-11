@@ -85,7 +85,9 @@ public class Main {
 					if (is != null) {
 						try {
 							is.close();
-						} catch (IOException e) {}
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}
