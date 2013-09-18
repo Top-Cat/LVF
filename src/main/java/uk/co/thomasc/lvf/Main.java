@@ -7,6 +7,11 @@ import java.io.InputStreamReader;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -65,20 +70,31 @@ public class Main {
 					HttpGet httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime");
 					HttpResponse response = client.execute(httpget);
 					is = response.getEntity().getContent();
-					BufferedReader stream = new BufferedReader(new InputStreamReader(is));
+					final BufferedReader stream = new BufferedReader(new InputStreamReader(is));
 					
 					String inputLine;
-					while ((inputLine = stream.readLine()) != null) {
-						TFL tfl = new TFL(parser.parse(inputLine));
-						stats.incRows();
-						if (tfl.getType() == 1) {
-							DBObject query = new BasicDBObject().append("vid", tfl.getVid()).append("stopid", tfl.getStop()).append("visit", tfl.getVisit()).append("destination", tfl.getDest());
-							DBObject update = new BasicDBObject("$set", new BasicDBObject().append("route", tfl.getRoute()).append("line_id", tfl.getLineid()).append("prediction", tfl.getTime()).append("dirid", tfl.getDirid()));
-							mongo.update("lvf_predictions", query, update, true, false, WriteConcern.UNACKNOWLEDGED);
-							
-							Bus.getFromVid(tfl.getVid()).newData(tfl);
+					Callable<String> readTask = new Callable<String>() {
+						@Override
+						public String call() throws Exception {
+							return stream.readLine();
 						}
-					}
+					};
+					ExecutorService executor = Executors.newFixedThreadPool(1);
+					do {
+						Future<String> future = executor.submit(readTask);
+						inputLine = future.get(30000, TimeUnit.MILLISECONDS);
+						if (inputLine != null) {
+							TFL tfl = new TFL(parser.parse(inputLine));
+							stats.incRows();
+							if (tfl.getType() == 1) {
+								DBObject query = new BasicDBObject().append("vid", tfl.getVid()).append("stopid", tfl.getStop()).append("visit", tfl.getVisit()).append("destination", tfl.getDest());
+								DBObject update = new BasicDBObject("$set", new BasicDBObject().append("route", tfl.getRoute()).append("line_id", tfl.getLineid()).append("prediction", tfl.getTime()).append("dirid", tfl.getDirid()));
+								mongo.update("lvf_predictions", query, update, true, false, WriteConcern.UNACKNOWLEDGED);
+								
+								Bus.getFromVid(tfl.getVid()).newData(tfl);
+							}
+						}
+					} while (inputLine != null);
 				} catch (Exception e) {
 					e.printStackTrace();
 				} finally {
