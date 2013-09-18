@@ -152,7 +152,7 @@ public class Bus {
 			
 			if (old != null) {
 				int uvi = getNewVid(vid);
-				if ((Boolean) old.get("pre")) {
+				if (old.containsField("pre") && (Boolean) old.get("pre")) {
 					// Pre-populated
 					Main.mongo.debug("New registration already in database (1prepopuated), - Old Uvi = " + old.get("uvi") + ", New VehicleId = " + vid + ", reg = " + tfl.getReg() + ", fleetnumber = " + old.get("fnum"));
 					Main.mongo.update("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", uvi)));
@@ -180,7 +180,7 @@ public class Bus {
 				
 				DBObject old = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()));
 				if (old != null) {
-					if ((Boolean) old.get("pre")) {
+					if (old.containsField("pre") && (Boolean) old.get("pre")) {
 						// Pre-populated :D
 						Main.mongo.debug("New registration already in database (2prepopuated), - Old Uvi = " + old.get("uvi") + ", New VehicleId = " + vid + ", reg = " + tfl.getReg() + ", fleetnumber = " + old.get("fnum"));
 						Main.mongo.update("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", uvi)));
