@@ -44,7 +44,6 @@ public class Bus {
 	private int vid;
 	private int uvi;
 	private String reg;
-	private boolean keep = false;
 	private boolean exists = true;
 	
 	private Map<String, Map<String, Map<String, Map<String, Date>>>> history = new HashMap<String, Map<String, Map<String, Map<String, Date>>>>();
@@ -57,10 +56,9 @@ public class Bus {
 	
 	private Bus(int vid) {
 		this.vid = vid;
-		DBObject vehicle = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject().append("cdreg", 1).append("keep", 1).append("uvi", 1));
+		DBObject vehicle = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject().append("cdreg", 1).append("uvi", 1));
 		if (vehicle != null) {
 			this.reg = (String) vehicle.get("cdreg");
-			this.keep = (Boolean) vehicle.get("keep");
 			this.uvi = (Integer) vehicle.get("uvi");
 		} else {
 			// Vehicle doesn't exist!
@@ -71,7 +69,6 @@ public class Bus {
 	public Bus(DBObject vehicle) {
 		this.vid = (Integer) vehicle.get("vid");
 		this.reg = (String) vehicle.get("cdreg");
-		this.keep = (Boolean) vehicle.get("keep");
 		this.uvi = (Integer) vehicle.get("uvi");
 		singletonUvi.put(uvi, this);
 		if (!singleton.containsKey(vid)) {
@@ -159,7 +156,6 @@ public class Bus {
 					this.exists = true;
 					this.reg = tfl.getReg();
 					this.uvi = uvi;
-					this.keep = true;
 				} else {
 					// Registration changing vids
 					preEntered(tfl, (Integer) old.get("uvi"), uvi);
@@ -169,8 +165,9 @@ public class Bus {
 			}
 		} else if (!tfl.getReg().equals(reg)) {
 			String tReg = tfl.getReg().replace(".", "");
+			DBObject vehicle = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject().append("keep", 1));
 			// Registration change
-			if (!keep || tReg.equals(reg)) {
+			if (!((Boolean) vehicle.get("keep")) || tReg.equals(reg)) {
 				DBObject old = Main.mongo.findAndModify("lvf_vehicles", new BasicDBObject("cdreg", reg), new BasicDBObject("$unset", new BasicDBObject("vid", 1)));
 				Main.mongo.debug("Registration already exists in vehicle data - VehicleId = " + old.get("uvi") + ", reg = " + tfl.getReg() + ", old reg = " + this.reg + ", fleetnumber = " + old.get("fnum"));
 				Main.mongo.update("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject("$set", new BasicDBObject("cdreg", tfl.getReg())));
@@ -205,7 +202,6 @@ public class Bus {
 			Main.mongo.update("lvf_vehicles", new BasicDBObject().append("orig_reg", tfl.getReg()).append("pre", true), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", newUvi).append("keep", true).append("cdreg", tfl.getReg())));
 			this.exists = true;
 			this.reg = tfl.getReg();
-			this.keep = true;
 			this.uvi = newUvi;
 		} else {
 			doInsert(tfl, getNewVid(vid));
@@ -232,7 +228,6 @@ public class Bus {
 		this.exists = true;
 		this.uvi = uvi;
 		this.reg = tfl.getReg();
-		this.keep = false;
 	}
 
 	private Date getHead() {
