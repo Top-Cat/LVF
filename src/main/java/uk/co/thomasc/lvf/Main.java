@@ -66,12 +66,12 @@ public class Main {
 			
 			while (true) {
 				InputStream is = null;
+				HttpGet httpget = null;
 				try {
-					HttpGet httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime");
+					httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime");
 					HttpResponse response = client.execute(httpget);
 					is = response.getEntity().getContent();
 					final BufferedReader stream = new BufferedReader(new InputStreamReader(is));
-					
 					String inputLine;
 					Callable<String> readTask = new Callable<String>() {
 						@Override
@@ -98,6 +98,9 @@ public class Main {
 				} catch (Exception e) {
 					e.printStackTrace();
 				} finally {
+					if (httpget != null) {
+						httpget.reset();
+					}
 					if (is != null) {
 						try {
 							is.close();
