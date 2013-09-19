@@ -156,6 +156,7 @@ public class Bus {
 					// Pre-populated
 					Main.mongo.debug("New registration already in database (1prepopuated), - Old Uvi = " + old.get("uvi") + ", New VehicleId = " + vid + ", reg = " + tfl.getReg() + ", fleetnumber = " + old.get("fnum"));
 					Main.mongo.update("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", uvi)));
+					this.exists = true;
 					this.reg = tfl.getReg();
 					this.uvi = uvi;
 					this.keep = true;
@@ -202,6 +203,7 @@ public class Bus {
 		if (pre != null) {
 			Main.mongo.debug("Found pre-entered data in vehicles table - Vid = " + vid + ", uvi = " + newUvi + ", reg = " + tfl.getReg() + ", operator = " + pre.get("operator") + ", fleetnumber = " + pre.get("fnum"));
 			Main.mongo.update("lvf_vehicles", new BasicDBObject().append("orig_reg", tfl.getReg()).append("pre", true), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", newUvi).append("keep", true).append("cdreg", tfl.getReg())));
+			this.exists = true;
 			this.reg = tfl.getReg();
 			this.keep = true;
 			this.uvi = newUvi;
