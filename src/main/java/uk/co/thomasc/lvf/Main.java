@@ -19,6 +19,7 @@ import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.bson.types.ObjectId;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -26,6 +27,9 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
+
+import uk.co.thomasc.lvf.bus.Bus;
+import uk.co.thomasc.lvf.task.Tasks;
 
 public class Main {
 	
@@ -35,6 +39,7 @@ public class Main {
 	
 	public static Mongo mongo;
 	private Stats stats = new Stats();
+	private Tasks tasks = new Tasks();
 	
 	public Main() {
 		JsonParser parser = new JsonParser();
@@ -93,6 +98,18 @@ public class Main {
 								
 								Bus.getFromVid(tfl.getVid()).newData(tfl);
 							}
+							
+							if (tasks.hasTasks()) {
+								DBObject[] tsks = tasks.getTasks();
+								for (DBObject task : tsks) {
+									try {
+										Bus.getFromVid((Integer) task.get("vid")).performTask((String) task.get("task"));
+										tasks.completed((ObjectId) task.get("_id"));
+									} catch (Exception e) {
+										e.printStackTrace();
+									}
+								}
+							}
 						}
 					} while (inputLine != null);
 				} catch (Exception e) {
@@ -112,6 +129,7 @@ public class Main {
 			}
 		}
 		stats.finish();
+		tasks.finish();
 	}
 	
 	public static Date midnight() {

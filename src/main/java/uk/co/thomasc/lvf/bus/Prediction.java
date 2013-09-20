@@ -1,4 +1,4 @@
-package uk.co.thomasc.lvf;
+package uk.co.thomasc.lvf.bus;
 
 import java.util.Date;
 

@@ -1,4 +1,4 @@
-package uk.co.thomasc.lvf;
+package uk.co.thomasc.lvf.bus;
 
 import java.util.Calendar;
 import java.util.Comparator;
@@ -12,6 +12,10 @@ import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
+
+import uk.co.thomasc.lvf.Main;
+import uk.co.thomasc.lvf.Stats;
+import uk.co.thomasc.lvf.TFL;
 
 public class Bus {
 	
@@ -264,6 +268,15 @@ public class Bus {
 		history_c.put((String) r.get("route"), history_b);
 		
 		history.put(TFL.dateFormat.format(r.get("date")), history_c);
+	}
+
+	public void performTask(String object) {
+		if (object == "withdraw") {
+			Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", this.uvi), new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1)));
+			this.exists = false;
+			this.reg = "";
+			this.vid = 0;
+		}
 	}
 	
 }

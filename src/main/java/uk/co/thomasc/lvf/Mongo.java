@@ -75,6 +75,10 @@ public class Mongo {
 		return buspicsDB.getCollection(collection).update(query, update, upsert, multi, concern);
 	}
 	
+	public WriteResult delete(String collection, DBObject query) {
+		return delete(collection, query, false);
+	}
+	
 	public WriteResult delete(String collection, DBObject query, boolean multi) {
 		return delete(collection, query, multi, WriteConcern.ACKNOWLEDGED);
 	}
