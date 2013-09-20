@@ -59,7 +59,7 @@ public class Tasks extends Thread {
 
 	public DBObject[] getTasks() {
 		synchronized (tasks) {
-			return (DBObject[]) tasks.values().toArray();
+			return tasks.values().toArray(new DBObject[0]);
 		}
 	}
 	
