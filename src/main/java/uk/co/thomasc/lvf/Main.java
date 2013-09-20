@@ -52,11 +52,14 @@ public class Main {
 			Credentials defaultcreds = new UsernamePasswordCredentials(((JsonObject) login.get("tfl")).get("user").getAsString(), ((JsonObject) login.get("tfl")).get("pass").getAsString());
 			client.getCredentialsProvider().setCredentials(new AuthScope("countdown.api.tfl.gov.uk", 80), defaultcreds);
 			
-			DBCursor c = mongo.find("lvf_vehicles", new BasicDBObject().append("cdreg", 1).append("keep", 1).append("uvi", 1).append("vid", 1));
+			DBCursor c = mongo.find("lvf_vehicles", new BasicDBObject("vid", new BasicDBObject("$exists", true)), new BasicDBObject().append("cdreg", 1).append("uvi", 1).append("vid", 1));
+			int loaded = 0;
 			while (c.hasNext()) {
 				DBObject r = c.next();
+				loaded++;
 				new Bus(r);
 			}
+			System.out.println("Loaded " + loaded + " vehicles");
 			
 			c = mongo.find("lvf_history", new BasicDBObject("date", new BasicDBObject("$gte", midnight()))).sort(new BasicDBObject("vid", 1));
 			while (c.hasNext()) {
