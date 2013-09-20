@@ -14,7 +14,7 @@ import uk.co.thomasc.lvf.Main;
 public class Tasks extends Thread {
 	
 	private boolean running = true;
-	private boolean hasTasks = true;
+	private boolean hasTasks = false;
 	private Map<ObjectId, DBObject> tasks = new HashMap<ObjectId, DBObject>();
 	
 	public Tasks() {
