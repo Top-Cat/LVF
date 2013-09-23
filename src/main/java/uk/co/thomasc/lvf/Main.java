@@ -38,6 +38,7 @@ public class Main {
 	}
 	
 	public static Mongo mongo;
+	public static int backoff = 0;
 	private Stats stats = new Stats();
 	private Tasks tasks = new Tasks();
 	
@@ -75,7 +76,14 @@ public class Main {
 			while (true) {
 				InputStream is = null;
 				HttpGet httpget = null;
+				Future<String> future = null;
 				try {
+					// Wait a bit before retrying
+					Thread.sleep(backoff);
+					if (backoff < 320000) {
+						backoff *= 2;
+					}
+					
 					httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime");
 					HttpResponse response = client.execute(httpget);
 					is = response.getEntity().getContent();
@@ -89,7 +97,7 @@ public class Main {
 					};
 					ExecutorService executor = Executors.newFixedThreadPool(1);
 					do {
-						Future<String> future = executor.submit(readTask);
+						future = executor.submit(readTask);
 						inputLine = future.get(30000, TimeUnit.MILLISECONDS);
 						if (inputLine != null) {
 							TFL tfl = new TFL(parser.parse(inputLine));
@@ -120,6 +128,9 @@ public class Main {
 				} finally {
 					if (httpget != null) {
 						httpget.reset();
+					}
+					if (future != null) {
+						future.cancel(true);
 					}
 					if (is != null) {
 						try {

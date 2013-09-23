@@ -31,6 +31,7 @@ public class Stats extends Thread {
 				if (rows > 0) {
 					System.out.println("Rows: " + rows + "\r");
 					rows = 0;
+					Main.backoff = 5000;
 				}
 				
 				if (++i % 60 == 0) {
