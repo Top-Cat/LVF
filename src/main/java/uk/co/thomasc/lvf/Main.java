@@ -38,7 +38,7 @@ public class Main {
 	}
 	
 	public static Mongo mongo;
-	public static int backoff = 0;
+	public static int backoff = 2500;
 	private Stats stats = new Stats();
 	private Tasks tasks = new Tasks();
 	
@@ -79,6 +79,9 @@ public class Main {
 				Future<String> future = null;
 				try {
 					// Wait a bit before retrying
+					if (backoff > 2500) {
+						System.out.println("Connection error! Waiting " + (backoff / 1000) + " seconds before trying again");
+					}
 					Thread.sleep(backoff);
 					if (backoff < 320000) {
 						backoff *= 2;
