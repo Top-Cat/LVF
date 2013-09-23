@@ -274,7 +274,7 @@ public class Bus {
 	}
 
 	public void performTask(String object) {
-		if (object == "withdraw") {
+		if (object.equals("withdraw")) {
 			Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", this.uvi), new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1)));
 			this.exists = false;
 			this.reg = "";
