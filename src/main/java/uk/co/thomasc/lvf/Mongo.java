@@ -123,7 +123,11 @@ public class Mongo {
 	}
 
 	public int incCounter(String counter) {
-		DBObject obj = buspicsDB.getCollection("counters").findAndModify(new BasicDBObject("_id", counter), new BasicDBObject("_id", 0), null, false, new BasicDBObject("$inc", new BasicDBObject("seq", 1)), true, false);
+		return incCounter(counter, 1);
+	}
+	
+	public int incCounter(String counter, int ammount) {
+		DBObject obj = buspicsDB.getCollection("counters").findAndModify(new BasicDBObject("_id", counter), new BasicDBObject("_id", 0), null, false, new BasicDBObject("$inc", new BasicDBObject("seq", ammount)), true, false);
 		return ((Number) obj.get("seq")).intValue();
 	}
 

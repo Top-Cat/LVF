@@ -81,8 +81,10 @@ public class Bus {
 	}
 
 	private int getNewVid(int guess) {
+		int inc = 0;
 		while (Main.mongo.exists("lvf_vehicles", new BasicDBObject("uvi", guess))) {
-			guess = Main.mongo.incCounter("uvi");
+			guess = Main.mongo.incCounter("uvi", inc);
+			inc = 1;
 		}
 		return guess;
 	}
@@ -168,10 +170,10 @@ public class Bus {
 				doInsert(tfl, getNewVid(vid));
 			}
 		} else if (!tfl.getReg().equals(reg)) {
-			String tReg = tfl.getReg().replace(".", "");
+			boolean hasDot = tfl.getReg().contains(".");
 			DBObject vehicle = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject().append("keep", 1));
 			// Registration change
-			if (!((Boolean) vehicle.get("keep")) || tReg.equals(reg)) {
+			if (!((Boolean) vehicle.get("keep")) || hasDot) {
 				DBObject old = Main.mongo.findAndModify("lvf_vehicles", new BasicDBObject("cdreg", reg), new BasicDBObject("$unset", new BasicDBObject("vid", 1)));
 				Main.mongo.debug("Registration already exists in vehicle data - VehicleId = " + old.get("uvi") + ", reg = " + tfl.getReg() + ", old reg = " + this.reg + ", fleetnumber = " + old.get("fnum"));
 				Main.mongo.update("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject("$set", new BasicDBObject("cdreg", tfl.getReg())));
@@ -187,6 +189,7 @@ public class Bus {
 						Main.mongo.debug("New registration already in database (2prepopuated), - Old Uvi = " + old.get("uvi") + ", New VehicleId = " + vid + ", reg = " + tfl.getReg() + ", fleetnumber = " + old.get("fnum"));
 						Main.mongo.update("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", uvi)));
 						this.uvi = uvi;
+						this.reg = tfl.getReg();
 					} else {
 						preEntered(tfl, (Integer) old.get("uvi"), uvi);
 					}
