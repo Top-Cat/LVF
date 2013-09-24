@@ -131,8 +131,8 @@ public class Mongo {
 		return ((Number) obj.get("seq")).intValue();
 	}
 
-	public void debug(String string) {
-		insert("lvf_audit", new BasicDBObject().append("text", string).append("level", true));
+	public void debug(String string, int uvi) {
+		insert("lvf_audit", new BasicDBObject().append("text", string).append("level", true).append("uvi", uvi));
 	}
 
 	public DBObject findAndModify(String collection, BasicDBObject query, BasicDBObject update) {
