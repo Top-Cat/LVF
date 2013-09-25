@@ -276,9 +276,22 @@ public class Bus {
 	public void performTask(String object) {
 		if (object.equals("withdraw")) {
 			Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", this.uvi), new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1)));
+			singleton.remove(vid);
 			this.exists = false;
 			this.reg = "";
 			this.vid = 0;
+		} else if (object.equals("delete")) {
+			// First remove linked data
+			Main.mongo.delete("lvf_history", new BasicDBObject("vid", this.uvi), true);
+			
+			// Now delete vehicle record
+			Main.mongo.delete("lvf_vehicles", new BasicDBObject("uvi", this.uvi));
+			singleton.remove(vid);
+			singletonUvi.remove(uvi);
+			this.exists = false;
+			this.reg = "";
+			this.vid = 0;
+			this.uvi = 0;
 		}
 	}
 	
