@@ -28,6 +28,12 @@ public class Bus {
 	});
 	
 	public static Bus getFromUvi(int uvi) {
+		if (!singletonUvi.containsKey(uvi)) {
+			DBObject r = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("uvi", uvi), new BasicDBObject().append("cdreg", 1).append("uvi", 1).append("vid", 1));
+			if (r != null) {
+				new Bus(r);
+			}
+		}
 		return singletonUvi.get(uvi);
 	}
 
