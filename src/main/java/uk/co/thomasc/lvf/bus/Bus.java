@@ -77,12 +77,14 @@ public class Bus {
 	}
 
 	public Bus(DBObject vehicle) {
-		this.vid = (Integer) vehicle.get("vid");
 		this.reg = (String) vehicle.get("cdreg");
 		this.uvi = (Integer) vehicle.get("uvi");
 		singletonUvi.put(uvi, this);
-		if (!singleton.containsKey(vid)) {
-			singleton.put(vid, this);
+		if (vehicle.containsField("vid")) {
+			this.vid = (Integer) vehicle.get("vid");
+			if (!singleton.containsKey(vid)) {
+				singleton.put(vid, this);
+			}
 		}
 	}
 
