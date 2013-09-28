@@ -107,7 +107,10 @@ public class Main {
 								DBObject[] tsks = tasks.getTasks();
 								for (DBObject task : tsks) {
 									try {
-										Bus.getFromUvi((Integer) task.get("uvi")).performTask((String) task.get("task"));
+										Bus bus = Bus.getFromUvi((Integer) task.get("uvi"));
+										if (bus != null) {
+											bus.performTask((String) task.get("task"));
+										}
 										tasks.completed((ObjectId) task.get("_id"));
 									} catch (Exception e) {
 										e.printStackTrace();
