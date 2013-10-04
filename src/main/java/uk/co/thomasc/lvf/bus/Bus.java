@@ -182,7 +182,11 @@ public class Bus {
 			DBObject vehicle = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject().append("keep", 1));
 			// Registration change
 			if (!((Boolean) vehicle.get("keep")) || hasDot) {
-				DBObject old = Main.mongo.findAndModify("lvf_vehicles", new BasicDBObject("cdreg", reg), new BasicDBObject("$unset", new BasicDBObject("vid", 1)));
+				DBObject old = Main.mongo.findAndModify("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()), new BasicDBObject("$unset", new BasicDBObject("vid", 1).append("cdreg", 1)));
+				if (old != null) {
+					getFromVid((Integer) old.get("vid")).forceWithdraw();
+				}
+				
 				Main.mongo.debug("Changed Vid (" + old.get("cur_reg") + ")", uvi);
 				Main.mongo.update("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject("$set", new BasicDBObject("cdreg", tfl.getReg())));
 				this.reg = tfl.getReg();
@@ -206,6 +210,13 @@ public class Bus {
 				}
 			}
 		}
+	}
+
+	private void forceWithdraw() {
+		singleton.remove(vid);
+		this.exists = false;
+		this.reg = "";
+		this.vid = 0;
 	}
 
 	private void preEntered(TFL tfl, int oldUvi, int newUvi) {
@@ -284,10 +295,7 @@ public class Bus {
 	public void performTask(String object) {
 		if (object.equals("withdraw")) {
 			Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", this.uvi), new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1)));
-			singleton.remove(vid);
-			this.exists = false;
-			this.reg = "";
-			this.vid = 0;
+			forceWithdraw();
 		} else if (object.equals("delete")) {
 			// First remove linked data
 			Main.mongo.delete("lvf_history", new BasicDBObject("vid", this.uvi), true);
