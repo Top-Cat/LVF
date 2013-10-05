@@ -10,6 +10,7 @@ import java.util.PriorityQueue;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
 
@@ -320,9 +321,11 @@ public class Bus {
 			Bus other = getFromUvi(newUvi);
 			if (other != null) {
 				Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", newUvi), new BasicDBObject("$set", new BasicDBObject().append("vid", vid).append("cdreg", reg))); // Update old record
+				loadHistory();
 				other.mergeIn(vid, reg, history, predictions);
 				
 				Main.mongo.delete("lvf_vehicles", new BasicDBObject("uvi", this.uvi)); // Delete new record (us)
+				Main.mongo.delete("lvf_history", new BasicDBObject("vid", this.uvi), true);
 				singletonUvi.remove(uvi);
 				this.exists = false;
 				this.reg = "";
@@ -362,6 +365,15 @@ public class Bus {
 					}
 				}
 			}
+		}
+	}
+	
+	private void loadHistory() {
+		DBCursor c = Main.mongo.find("lvf_history", new BasicDBObject("vid", this.uvi));
+		while (c.hasNext()) {
+			DBObject r = c.next();
+			updateHistory(TFL.dateFormat.format(r.get("date")), (Date) r.get("last_seen"), (String) r.get("route"), (String) r.get("lineid"));
+			updateHistory(TFL.dateFormat.format(r.get("date")), (Date) r.get("first_seen"), (String) r.get("route"), (String) r.get("lineid"));
 		}
 	}
 	
