@@ -125,6 +125,14 @@ public class Bus {
 	private void updateHistory(String date, Date time, String route, String lineid) {
 		BasicDBObject update = new BasicDBObject();
 		
+		Calendar cal = new GregorianCalendar();
+		cal.setTime(time);
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		Date today = cal.getTime();
+		
 		if (!history.containsKey(date)) {
 			history.put(date, new HashMap<String, Map<String,Map<String,Date>>>());
 		}
@@ -133,6 +141,11 @@ public class Bus {
 		}
 		if (!history.get(date).get(route).containsKey(lineid)) {
 			history.get(date).get(route).put(lineid, new HashMap<String, Date>());
+			DBObject row = Main.mongo.findOne("lvf_history", new BasicDBObject().append("vid", uvi).append("date", today).append("route", route).append("lineid", lineid));
+			if (row != null) {
+				history.get(date).get(route).get(lineid).put("first_seen", (Date) row.get("first_seen"));
+				history.get(date).get(route).get(lineid).put("last_seen", (Date) row.get("last_seen"));
+			}
 		}
 		
 		if (!history.get(date).get(route).get(lineid).containsKey("first_seen") || history.get(date).get(route).get(lineid).get("first_seen").after(time)) {
@@ -147,13 +160,7 @@ public class Bus {
 		}
 		
 		if (!update.isEmpty()) {
-			Calendar cal = new GregorianCalendar();
-			cal.setTime(time);
-			cal.set(Calendar.HOUR_OF_DAY, 0);
-			cal.set(Calendar.MINUTE, 0);
-			cal.set(Calendar.SECOND, 0);
-			cal.set(Calendar.MILLISECOND, 0);
-			Main.mongo.update("lvf_history", new BasicDBObject().append("vid", this.uvi).append("date", cal.getTime()).append("lineid", lineid), new BasicDBObject("$set", update), true, false, WriteConcern.UNACKNOWLEDGED);
+			Main.mongo.update("lvf_history", new BasicDBObject().append("vid", this.uvi).append("date", today).append("lineid", lineid), new BasicDBObject("$set", update), true, false, WriteConcern.UNACKNOWLEDGED);
 		}
 	}
 
