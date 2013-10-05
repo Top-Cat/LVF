@@ -292,7 +292,7 @@ public class Bus {
 		history.put(TFL.dateFormat.format(r.get("date")), history_c);
 	}
 
-	public void performTask(String object) {
+	public void performTask(String object, DBObject extra) {
 		if (object.equals("withdraw")) {
 			Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", this.uvi), new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1)));
 			forceWithdraw();
@@ -308,6 +308,55 @@ public class Bus {
 			this.reg = "";
 			this.vid = 0;
 			this.uvi = 0;
+		} else if (object.equals("merge")) {
+			int newUvi = (Integer) extra.get("uvi");
+			Bus other = getFromUvi(newUvi);
+			if (other != null) {
+				Main.mongo.delete("lvf_vehicles", new BasicDBObject("uvi", this.uvi)); // Delete new record (us)
+				singleton.remove(vid);
+				singletonUvi.remove(uvi);
+				this.exists = false;
+				this.reg = "";
+				this.vid = 0;
+				this.uvi = 0;
+				
+				Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", newUvi), new BasicDBObject("$set", new BasicDBObject().append("vid", vid).append("cdreg", reg))); // Update old record
+				
+				other.mergeIn(vid, reg, history, predictions);
+			}
+		}
+	}
+
+	private void mergeIn(int vid2, String reg2, Map<String, Map<String, Map<String, Map<String, Date>>>> history2, PriorityQueue<Prediction> predictions2) {
+		this.exists = true;
+		this.reg = reg2;
+		
+		singleton.remove(vid);
+		singleton.put(vid2, this);
+		this.vid = vid2;
+		
+		// Merge predictions
+		while (!predictions2.isEmpty()) {
+			Prediction pred = predictions2.poll();
+			
+			if (pred_update.containsKey(pred.getStop())) {
+				predictions.remove(pred_update.get(pred.getStop()));
+			}
+			
+			pred_update.put(pred.getStop(), pred);
+			predictions.offer(pred);
+		}
+		updateQueue();
+		
+		// Merge history
+		for (String date : history2.keySet()) {
+			for (String route : history2.get(date).keySet()) {
+				for (String lineid : history2.get(date).get(route).keySet()) {
+					for (String row : history2.get(date).get(route).get(lineid).keySet()) {
+						updateHistory(date, history2.get(date).get(route).get(lineid).get(row), route, lineid);
+					}
+				}
+			}
 		}
 	}
 	

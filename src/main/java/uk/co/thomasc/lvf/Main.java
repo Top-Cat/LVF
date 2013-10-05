@@ -109,7 +109,7 @@ public class Main {
 									try {
 										Bus bus = Bus.getFromUvi((Integer) task.get("uvi"));
 										if (bus != null) {
-											bus.performTask((String) task.get("task"));
+											bus.performTask((String) task.get("task"), (DBObject) task.get("extra"));
 										}
 										tasks.completed((ObjectId) task.get("_id"));
 									} catch (Exception e) {
