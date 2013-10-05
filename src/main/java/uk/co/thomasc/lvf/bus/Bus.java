@@ -312,6 +312,9 @@ public class Bus {
 			int newUvi = (Integer) extra.get("uvi");
 			Bus other = getFromUvi(newUvi);
 			if (other != null) {
+				Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", newUvi), new BasicDBObject("$set", new BasicDBObject().append("vid", vid).append("cdreg", reg))); // Update old record
+				other.mergeIn(vid, reg, history, predictions);
+				
 				Main.mongo.delete("lvf_vehicles", new BasicDBObject("uvi", this.uvi)); // Delete new record (us)
 				singleton.remove(vid);
 				singletonUvi.remove(uvi);
@@ -319,10 +322,6 @@ public class Bus {
 				this.reg = "";
 				this.vid = 0;
 				this.uvi = 0;
-				
-				Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", newUvi), new BasicDBObject("$set", new BasicDBObject().append("vid", vid).append("cdreg", reg))); // Update old record
-				
-				other.mergeIn(vid, reg, history, predictions);
 			}
 		}
 	}
