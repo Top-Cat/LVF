@@ -302,7 +302,7 @@ public class Bus {
 
 	public void performTask(String object, DBObject extra) {
 		if (object.equals("withdraw")) {
-			Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", this.uvi), new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1)));
+			Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", this.uvi), new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1).append("whereseen", 1)));
 			forceWithdraw();
 		} else if (object.equals("delete")) {
 			// First remove linked data
