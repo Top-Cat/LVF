@@ -316,7 +316,6 @@ public class Bus {
 				other.mergeIn(vid, reg, history, predictions);
 				
 				Main.mongo.delete("lvf_vehicles", new BasicDBObject("uvi", this.uvi)); // Delete new record (us)
-				singleton.remove(vid);
 				singletonUvi.remove(uvi);
 				this.exists = false;
 				this.reg = "";
