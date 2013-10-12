@@ -195,7 +195,7 @@ public class Bus {
 					getFromVid((Integer) old.get("vid")).forceWithdraw();
 				}
 				
-				Main.mongo.debug("Changed Vid (" + old.get("cur_reg") + ")", uvi);
+				Main.mongo.debug("Changed Vid (" + reg + ")", uvi);
 				Main.mongo.update("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject("$set", new BasicDBObject("cdreg", tfl.getReg())));
 				this.reg = tfl.getReg();
 			} else {
