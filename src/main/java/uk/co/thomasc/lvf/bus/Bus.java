@@ -281,6 +281,7 @@ public class Bus {
 			Prediction pred = predictions.peek();
 			updateHistory(pred.getKeytime(), pred.getTime(), pred.getRoute(), pred.getLineid());
 			Main.mongo.update("lvf_vehicles", new BasicDBObject("vid", this.vid), new BasicDBObject("$set", new BasicDBObject("whereseen", pred.toDbObject())), false, false, WriteConcern.UNACKNOWLEDGED);
+			Main.mongo.update("lvf_destinations", new BasicDBObject().append("route", pred.getRoute()).append("lineid", pred.getLineid()).append("direction", pred.getDirid()).append("destination", pred.getDest()), new BasicDBObject().append("$setOnInsert", new BasicDBObject("day", "SD")).append("$inc", new BasicDBObject("dest_cnt", 1)), true, false, WriteConcern.UNACKNOWLEDGED);
 			
 			queue.offer(this);
 		}
