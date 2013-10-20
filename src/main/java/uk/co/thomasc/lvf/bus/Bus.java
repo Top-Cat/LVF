@@ -7,6 +7,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Random;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
@@ -20,6 +21,7 @@ import uk.co.thomasc.lvf.TFL;
 
 public class Bus {
 	
+	private static Random rand = new Random();
 	private static Map<Integer, Bus> singleton = new HashMap<Integer, Bus>();
 	private static Map<Integer, Bus> singletonUvi = new HashMap<Integer, Bus>();
 	private static PriorityQueue<Bus> queue = new PriorityQueue<Bus>(11, new Comparator<Bus>() {
@@ -98,7 +100,7 @@ public class Bus {
 		return guess;
 	}
 	
-	public void newData(TFL tfl) {
+	public boolean newData(TFL tfl) {
 		checkQueue();
 		
 		checkVehicle(tfl);
@@ -106,6 +108,9 @@ public class Bus {
 		Prediction pred;
 		if (pred_update.containsKey(tfl.getStop())) {
 			pred = pred_update.get(tfl.getStop());
+			if (pred.getDifftime() == tfl.getDifftime()) {
+				return false;
+			}
 			predictions.remove(pred);
 			
 			pred.setRoute(tfl.getRoute());
@@ -115,12 +120,13 @@ public class Bus {
 			pred.setDirid(tfl.getDirid());
 			pred.setDest(tfl.getDest());
 		} else {
-			pred = new Prediction(tfl.getRoute(), tfl.getLineid(), tfl.getTime(), tfl.getKeytime(), tfl.getStop(), tfl.getDirid(), tfl.getDest());
+			pred = new Prediction(tfl.getRoute(), tfl.getLineid(), tfl.getTime(), tfl.getKeytime(), tfl.getDifftime(), tfl.getStop(), tfl.getDirid(), tfl.getDest());
 		}
 		pred_update.put(tfl.getStop(), pred);
 		predictions.offer(pred);
 		
 		updateQueue();
+		return true;
 	}
 	
 	private void updateHistory(String date, Date time, String route, String lineid) {
@@ -281,7 +287,9 @@ public class Bus {
 			Prediction pred = predictions.peek();
 			updateHistory(pred.getKeytime(), pred.getTime(), pred.getRoute(), pred.getLineid());
 			Main.mongo.update("lvf_vehicles", new BasicDBObject("vid", this.vid), new BasicDBObject("$set", new BasicDBObject("whereseen", pred.toDbObject())), false, false, WriteConcern.UNACKNOWLEDGED);
-			Main.mongo.update("lvf_destinations", new BasicDBObject().append("route", pred.getRoute()).append("lineid", pred.getLineid()).append("direction", pred.getDirid()).append("destination", pred.getDest()), new BasicDBObject().append("$setOnInsert", new BasicDBObject("day", "SD")).append("$inc", new BasicDBObject("dest_cnt", 1)), true, false, WriteConcern.UNACKNOWLEDGED);
+			if (rand.nextInt(100) == 0) {
+				Main.mongo.update("lvf_destinations", new BasicDBObject().append("route", pred.getRoute()).append("lineid", pred.getLineid()).append("direction", pred.getDirid()).append("destination", pred.getDest()), new BasicDBObject().append("$setOnInsert", new BasicDBObject("day", "SD")).append("$inc", new BasicDBObject("dest_cnt", 1)), true, false, WriteConcern.UNACKNOWLEDGED);
+			}
 			
 			queue.offer(this);
 		}

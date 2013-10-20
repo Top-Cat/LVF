@@ -25,8 +25,10 @@ public class TFL {
 	
 	@Getter private Date time;
 	@Getter private String keytime;
+	@Getter private String difftime;
 	
 	public static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	public static SimpleDateFormat diffDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	
 	public TFL(JsonElement json) {
 		JsonArray arr = (JsonArray) json;
@@ -42,6 +44,7 @@ public class TFL {
 			reg = arr.get(8).getAsString();
 			time = new Date(arr.get(9).getAsLong());
 			keytime = dateFormat.format(time);
+			difftime = diffDateFormat.format(time);
 		} else if (type == 1) {
 			type = -1;
 		}

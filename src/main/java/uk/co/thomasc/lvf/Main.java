@@ -121,11 +121,11 @@ public class Main {
 							TFL tfl = new TFL(parser.parse(inputLine));
 							stats.incRows();
 							if (tfl.getType() == 1) {
-								DBObject query = new BasicDBObject().append("vid", tfl.getVid()).append("stopid", tfl.getStop()).append("visit", tfl.getVisit()).append("destination", tfl.getDest());
-								DBObject update = new BasicDBObject("$set", new BasicDBObject().append("route", tfl.getRoute()).append("line_id", tfl.getLineid()).append("prediction", tfl.getTime()).append("dirid", tfl.getDirid()));
-								mongo.update("lvf_predictions", query, update, true, false, WriteConcern.UNACKNOWLEDGED);
-								
-								Bus.getFromVid(tfl.getVid()).newData(tfl);
+								if (Bus.getFromVid(tfl.getVid()).newData(tfl)) {
+									DBObject query = new BasicDBObject().append("vid", tfl.getVid()).append("stopid", tfl.getStop()).append("visit", tfl.getVisit()).append("destination", tfl.getDest());
+									DBObject update = new BasicDBObject("$set", new BasicDBObject().append("route", tfl.getRoute()).append("line_id", tfl.getLineid()).append("prediction", tfl.getTime()).append("dirid", tfl.getDirid()));
+									mongo.update("lvf_predictions", query, update, true, false, WriteConcern.UNACKNOWLEDGED);
+								}
 							}
 						}
 					} while (inputLine != null);
