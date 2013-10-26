@@ -179,8 +179,8 @@ public class Bus {
 				int uvi = getNewVid(vid);
 				if (old.containsField("pre") && (Boolean) old.get("pre")) {
 					// Pre-populated
-					Main.mongo.debug("Prepopulated Vehicle (" + old.get("cur_reg") + ")", uvi);
-					Main.mongo.update("lvf_vehicles", new BasicDBObject("cur_reg", tfl.getReg()), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", uvi)));
+					Main.mongo.debug("1Prepopulated Vehicle (" + old.get("cur_reg") + ")", uvi);
+					Main.mongo.update("lvf_vehicles", new BasicDBObject("cur_reg", tfl.getReg()), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", uvi).append("cdreg", tfl.getReg())));
 					this.exists = true;
 					this.reg = tfl.getReg();
 					this.uvi = uvi;
@@ -212,7 +212,7 @@ public class Bus {
 				if (old != null) {
 					if (old.containsField("pre") && (Boolean) old.get("pre")) {
 						// Pre-populated :D
-						Main.mongo.debug("Prepopulated Vehicle (" + old.get("cur_reg") + ")", uvi);
+						Main.mongo.debug("2Prepopulated Vehicle (" + old.get("cur_reg") + ")", uvi);
 						Main.mongo.update("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", uvi)));
 						this.uvi = uvi;
 						this.reg = tfl.getReg();
@@ -238,7 +238,7 @@ public class Bus {
 		
 		DBObject pre = Main.mongo.findOne("lvf_vehicles", new BasicDBObject().append("orig_reg", tfl.getReg()).append("pre", true));
 		if (pre != null) {
-			Main.mongo.debug("Prepopulated Vehicle (" + pre.get("cur_reg") + ")", newUvi);
+			Main.mongo.debug("3Prepopulated Vehicle (" + pre.get("cur_reg") + ")", newUvi);
 			Main.mongo.update("lvf_vehicles", new BasicDBObject().append("orig_reg", tfl.getReg()).append("pre", true), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", newUvi).append("keep", true).append("cdreg", tfl.getReg())));
 			this.exists = true;
 			this.reg = tfl.getReg();
