@@ -40,13 +40,14 @@ public class Main {
 	public static Mongo mongo;
 	public static int backoff = 2500;
 	private Stats stats = new Stats();
-	private Tasks tasks = new Tasks();
+	private Tasks tasks;
 	
 	public Main() {
 		JsonParser parser = new JsonParser();
 		
 		JsonObject login = (JsonObject) parser.parse(new InputStreamReader(this.getClass().getResourceAsStream("/login.json")));
 		mongo = new Mongo(login);
+		tasks = new Tasks();
 		
 		if (mongo.isMaster()) {
 			DefaultHttpClient client = new DefaultHttpClient();
