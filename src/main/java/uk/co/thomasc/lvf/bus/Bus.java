@@ -213,7 +213,7 @@ public class Bus {
 					if (old.containsField("pre") && (Boolean) old.get("pre")) {
 						// Pre-populated :D
 						Main.mongo.debug("2Prepopulated Vehicle (" + old.get("cur_reg") + ")", uvi);
-						Main.mongo.update("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", uvi)));
+						Main.mongo.update("lvf_vehicles", new BasicDBObject("cur_reg", tfl.getReg()), new BasicDBObject().append("$unset", new BasicDBObject("pre", 1)).append("$set", new BasicDBObject().append("vid", vid).append("uvi", uvi).append("cdreg", 1)));
 						this.uvi = uvi;
 						this.reg = tfl.getReg();
 					} else {
