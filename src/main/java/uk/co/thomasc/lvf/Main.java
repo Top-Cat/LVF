@@ -114,7 +114,7 @@ public class Main {
 										}
 										tasks.completed((ObjectId) task.get("_id"));
 									} catch (Exception e) {
-										e.printStackTrace();
+										tasks.failed((ObjectId) task.get("_id"), e);
 									}
 								}
 							}

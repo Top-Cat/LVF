@@ -1,5 +1,7 @@
 package uk.co.thomasc.lvf.task;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,7 +30,7 @@ public class Tasks extends Thread {
 				sleep(10000);
 				
 				synchronized (tasks) {
-					DBCursor c = Main.mongo.find("lvf_tasks");
+					DBCursor c = Main.mongo.find("lvf_tasks", new BasicDBObject("failed", false));
 					while (c.hasNext()) {
 						hasTasks = true;
 						DBObject obj = c.next();
@@ -60,6 +62,19 @@ public class Tasks extends Thread {
 	public DBObject[] getTasks() {
 		synchronized (tasks) {
 			return tasks.values().toArray(new DBObject[0]);
+		}
+	}
+
+	public void failed(ObjectId id, Exception e) {
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		e.printStackTrace(pw);
+		String exception = sw.toString();
+		
+		synchronized (tasks) {
+			tasks.remove(id);
+			hasTasks = tasks.size() > 0;
+			Main.mongo.update("lvf_tasks", new BasicDBObject("_id" , id), new BasicDBObject("$set", new BasicDBObject().append("exception", exception).append("failed", true)));
 		}
 	}
 	
