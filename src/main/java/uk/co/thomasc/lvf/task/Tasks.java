@@ -37,7 +37,7 @@ public class Tasks extends Thread {
 						tasks.put((ObjectId) obj.get("_id"), obj);
 					}
 				}
-			} catch (InterruptedException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
