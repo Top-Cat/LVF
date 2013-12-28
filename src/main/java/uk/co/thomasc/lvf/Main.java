@@ -131,7 +131,7 @@ public class Main {
 								try {
 									if (Bus.getFromVid(tfl.getVid()).newData(tfl)) {
 										DBObject query = new BasicDBObject().append("vid", tfl.getVid()).append("stopid", tfl.getStop()).append("visit", tfl.getVisit()).append("destination", tfl.getDest());
-										DBObject update = new BasicDBObject("$set", new BasicDBObject().append("route", tfl.getRoute()).append("line_id", tfl.getLineid()).append("prediction", tfl.getTime()).append("dirid", tfl.getDirid()).append("expires", tfl.isValid()));
+										DBObject update = new BasicDBObject("$set", new BasicDBObject().append("route", tfl.getRoute()).append("line_id", tfl.getLineid()).append("prediction", tfl.getTime()).append("dirid", tfl.getDirid()).append("valid", tfl.isValid()));
 										mongo.update("lvf_predictions", query, update, true, false, WriteConcern.UNACKNOWLEDGED);
 									}
 								} catch (Exception e) {
