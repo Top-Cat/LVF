@@ -45,15 +45,17 @@ public class Main {
 	public Main() {
 		JsonParser parser = new JsonParser();
 		
+		// Read username-password from login.json
 		JsonObject login = (JsonObject) parser.parse(new InputStreamReader(this.getClass().getResourceAsStream("/login.json")));
-		mongo = new Mongo(login);
-		tasks = new Tasks();
+		mongo = new Mongo(login);	//login to database
+		tasks = new Tasks();		//set task handler
 		
 		if (mongo.isMaster()) {
 			DefaultHttpClient client = new DefaultHttpClient();
 			Credentials defaultcreds = new UsernamePasswordCredentials(((JsonObject) login.get("tfl")).get("user").getAsString(), ((JsonObject) login.get("tfl")).get("pass").getAsString());
 			client.getCredentialsProvider().setCredentials(new AuthScope("countdown.api.tfl.gov.uk", 80), defaultcreds);
 			
+			// read vehicles table, that are active (have vids), read cdreg, uvi & vid
 			DBCursor c = mongo.find("lvf_vehicles", new BasicDBObject("vid", new BasicDBObject("$exists", true)), new BasicDBObject().append("cdreg", 1).append("uvi", 1).append("vid", 1));
 			int loaded = 0;
 			while (c.hasNext()) {
@@ -63,6 +65,7 @@ public class Main {
 			}
 			System.out.println("Loaded " + loaded + " vehicles");
 			
+			// load current day history records for active vehicles
 			c = mongo.find("lvf_history", new BasicDBObject("date", new BasicDBObject("$gte", midnight()))).sort(new BasicDBObject("vid", 1));
 			while (c.hasNext()) {
 				DBObject r = c.next();
@@ -88,7 +91,8 @@ public class Main {
 						backoff *= 2;
 					}
 					
-					httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime");
+					// open TFL connection....
+					httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime,ExpireTime");
 					HttpResponse response = client.execute(httpget);
 					is = response.getEntity().getContent();
 					final BufferedReader stream = new BufferedReader(new InputStreamReader(is));
@@ -104,6 +108,7 @@ public class Main {
 						future = executor.submit(readTask);
 						inputLine = future.get(30000, TimeUnit.MILLISECONDS);
 						if (inputLine != null) {
+							// here when line read from TFL
 							if (tasks.hasTasks()) {
 								DBObject[] tsks = tasks.getTasks();
 								for (DBObject task : tsks) {
@@ -119,13 +124,14 @@ public class Main {
 								}
 							}
 							
+							// here to process TFL lines
 							TFL tfl = new TFL(parser.parse(inputLine));
 							stats.incRows();
 							if (tfl.getType() == 1) {
 								try {
 									if (Bus.getFromVid(tfl.getVid()).newData(tfl)) {
 										DBObject query = new BasicDBObject().append("vid", tfl.getVid()).append("stopid", tfl.getStop()).append("visit", tfl.getVisit()).append("destination", tfl.getDest());
-										DBObject update = new BasicDBObject("$set", new BasicDBObject().append("route", tfl.getRoute()).append("line_id", tfl.getLineid()).append("prediction", tfl.getTime()).append("dirid", tfl.getDirid()));
+										DBObject update = new BasicDBObject("$set", new BasicDBObject().append("route", tfl.getRoute()).append("line_id", tfl.getLineid()).append("prediction", tfl.getTime()).append("dirid", tfl.getDirid()).append("expires", tfl.getExpires()));
 										mongo.update("lvf_predictions", query, update, true, false, WriteConcern.UNACKNOWLEDGED);
 									}
 								} catch (Exception e) {

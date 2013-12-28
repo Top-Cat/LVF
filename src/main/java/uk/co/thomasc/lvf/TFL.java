@@ -22,6 +22,7 @@ public class TFL {
 	@Getter private String dest;
 	@Getter private int vid;
 	@Getter private String reg;
+	@Getter private Date expires;
 	
 	@Getter private Date time;
 	@Getter private String keytime;
@@ -43,6 +44,7 @@ public class TFL {
 			vid = arr.get(7).getAsInt();
 			reg = arr.get(8).getAsString();
 			time = new Date(arr.get(9).getAsLong());
+			expires = new Date(arr.get(10).getAsLong());			
 			keytime = dateFormat.format(time);
 			difftime = diffDateFormat.format(time);
 		} else if (type == 1) {
