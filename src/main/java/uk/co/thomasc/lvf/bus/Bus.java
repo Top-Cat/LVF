@@ -116,12 +116,12 @@ public class Bus {
 			pred.setRoute(tfl.getRoute());
 			pred.setLineid(tfl.getLineid());
 			pred.setTime(tfl.getTime());
-			pred.setExpires(tfl.getExpires());
+			pred.setValid(tfl.isValid());
 			pred.setKeytime(tfl.getKeytime());
 			pred.setDirid(tfl.getDirid());
 			pred.setDest(tfl.getDest());
 		} else {
-			pred = new Prediction(tfl.getRoute(), tfl.getLineid(), tfl.getTime(), tfl.getExpires(), tfl.getKeytime(), tfl.getDifftime(), tfl.getStop(), tfl.getDirid(), tfl.getDest());
+			pred = new Prediction(tfl.getRoute(), tfl.getLineid(), tfl.getTime(), tfl.isValid(), tfl.getKeytime(), tfl.getDifftime(), tfl.getStop(), tfl.getDirid(), tfl.getDest());
 		}
 		pred_update.put(tfl.getStop(), pred);
 		predictions.offer(pred);
@@ -279,7 +279,7 @@ public class Bus {
 		queue.remove(this);
 		
 		Date now = new Date();
-		while (!predictions.isEmpty() && ( predictions.peek().getTime().before(now) || predictions.peek().getExpires().before(now))) {
+		while (!predictions.isEmpty() && ( predictions.peek().getTime().before(now) || !predictions.peek().isValid())) {
 			Prediction pred = predictions.poll();
 			pred_update.remove(pred.getStop());
 		}

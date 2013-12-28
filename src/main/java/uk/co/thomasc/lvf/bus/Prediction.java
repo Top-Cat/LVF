@@ -16,7 +16,7 @@ public class Prediction {
 	@Getter @Setter private String route;
 	@Getter @Setter private String lineid;
 	@Getter @Setter private Date time;
-	@Getter @Setter private Date expires;
+	@Getter @Setter private boolean valid;
 	@Getter @Setter private String keytime;
 	@Getter @Setter private String difftime;
 	@Getter @Setter private String stop;

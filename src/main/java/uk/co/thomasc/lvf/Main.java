@@ -92,7 +92,7 @@ public class Main {
 					}
 					
 					// open TFL connection....
-					httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime,ExpireTime");
+					httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime");
 					HttpResponse response = client.execute(httpget);
 					is = response.getEntity().getContent();
 					final BufferedReader stream = new BufferedReader(new InputStreamReader(is));
@@ -131,7 +131,7 @@ public class Main {
 								try {
 									if (Bus.getFromVid(tfl.getVid()).newData(tfl)) {
 										DBObject query = new BasicDBObject().append("vid", tfl.getVid()).append("stopid", tfl.getStop()).append("visit", tfl.getVisit()).append("destination", tfl.getDest());
-										DBObject update = new BasicDBObject("$set", new BasicDBObject().append("route", tfl.getRoute()).append("line_id", tfl.getLineid()).append("prediction", tfl.getTime()).append("dirid", tfl.getDirid()).append("expires", tfl.getExpires()));
+										DBObject update = new BasicDBObject("$set", new BasicDBObject().append("route", tfl.getRoute()).append("line_id", tfl.getLineid()).append("prediction", tfl.getTime()).append("dirid", tfl.getDirid()).append("expires", tfl.isValid()));
 										mongo.update("lvf_predictions", query, update, true, false, WriteConcern.UNACKNOWLEDGED);
 									}
 								} catch (Exception e) {
@@ -175,6 +175,12 @@ public class Main {
 		cal.set(Calendar.MINUTE, 0);
 		cal.set(Calendar.SECOND, 0);
 		cal.set(Calendar.MILLISECOND, 0);
+		return cal.getTime();
+	}
+	
+	public static Date expires() {
+		Calendar cal = new GregorianCalendar();
+		cal.add(Calendar.MINUTE, 5);
 		return cal.getTime();
 	}
 }
