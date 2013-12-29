@@ -108,7 +108,7 @@ public class Bus {
 		Prediction pred;
 		if (pred_update.containsKey(tfl.getStop())) {
 			pred = pred_update.get(tfl.getStop());
-			if (pred.getDifftime() == tfl.getDifftime() && pred.isValid() == tfl.isValid()) {
+			if (pred.getDifftime().equals(tfl.getDifftime()) && pred.isValid() == tfl.isValid()) {
 				return false;
 			}
 			predictions.remove(pred);
