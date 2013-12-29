@@ -36,7 +36,7 @@ public class DestinationTask extends TimerTask {
 							Destination current = destMap.get(route).get(lineid).get(dirid).get(destination);
 							if (largest == null || current.getCount() > largest.getCount()) {
 								if (largest != null) {
-									seenReal |= resetCount(route, lineid, dirid, destination, current.getCount());
+									seenReal |= resetCount(route, lineid, dirid, largest.getDestination(), largest.getCount());
 								}
 								largest = current;
 							} else {
