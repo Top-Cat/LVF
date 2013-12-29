@@ -239,7 +239,9 @@ public class Bus {
 		history.clear();
 		pred_update.clear();
 		predictions.clear();
-		return Main.mongo.findAndModify("lvf_vehicles", vehicle, new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1).append("whereseen", 1)));
+		DBObject oldVehicle = Main.mongo.findAndModify("lvf_vehicles", vehicle, new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1).append("whereseen", 1)));
+		Main.mongo.debug("Withdrawn vehicle (" + oldVehicle.get("cur_reg") + ")", (Integer) oldVehicle.get("uvi"));
+		return oldVehicle;
 	}
 	
 	private void preEntered(TFL tfl, int oldUvi, int newUvi) {
