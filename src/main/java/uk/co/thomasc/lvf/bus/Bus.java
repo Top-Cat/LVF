@@ -197,7 +197,7 @@ public class Bus {
 			DBObject vehicle = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("vid", vid), new BasicDBObject().append("keep", 1));
 			// Registration change
 			if (!((Boolean) vehicle.get("keep")) || hasDot) {
-				DBObject old = Main.mongo.findAndModify("lvf_vehicles", new BasicDBObject("cdreg", tfl.getReg()), new BasicDBObject("$unset", new BasicDBObject("vid", 1).append("cdreg", 1)));
+				DBObject old = withdrawVehicle(new BasicDBObject("cdreg", tfl.getReg()));
 				if (old != null) {
 					getFromVid((Integer) old.get("vid")).forceWithdraw();
 				}
@@ -207,7 +207,7 @@ public class Bus {
 				this.reg = tfl.getReg();
 			} else {
 				int uvi = getNewVid(vid);
-				Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", this.uvi), new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1)));
+				withdrawVehicle(new BasicDBObject("uvi", this.uvi));
 				
 				DBObject old = Main.mongo.findOne("lvf_vehicles", new BasicDBObject("cur_reg", tfl.getReg()));
 				if (old != null) {
@@ -234,8 +234,15 @@ public class Bus {
 		this.vid = 0;
 	}
 
+	private DBObject withdrawVehicle(DBObject vehicle) {
+		history.clear();
+		pred_update.clear();
+		predictions.clear();
+		return Main.mongo.findAndModify("lvf_vehicles", vehicle, new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1).append("whereseen", 1)));
+	}
+	
 	private void preEntered(TFL tfl, int oldUvi, int newUvi) {
-		Main.mongo.update("lvf_vehicles", new BasicDBObject("uvi", oldUvi), new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1).append("operator", 1).append("fnum", 1)));
+		withdrawVehicle(new BasicDBObject("uvi", oldUvi));
 		
 		DBObject pre = Main.mongo.findOne("lvf_vehicles", new BasicDBObject().append("orig_reg", tfl.getReg()).append("pre", true));
 		if (pre != null) {

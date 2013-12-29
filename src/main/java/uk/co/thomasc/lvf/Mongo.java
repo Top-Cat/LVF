@@ -135,7 +135,7 @@ public class Mongo {
 		insert("lvf_audit", new BasicDBObject().append("text", string).append("level", true).append("uvi", uvi));
 	}
 
-	public DBObject findAndModify(String collection, BasicDBObject query, BasicDBObject update) {
+	public DBObject findAndModify(String collection, DBObject query, DBObject update) {
 		return buspicsDB.getCollection(collection).findAndModify(query, update);
 	}
 
