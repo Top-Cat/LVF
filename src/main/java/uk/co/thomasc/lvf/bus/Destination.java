@@ -8,7 +8,6 @@ import lombok.Setter;
 import lombok.ToString;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
 
 import uk.co.thomasc.lvf.Main;
