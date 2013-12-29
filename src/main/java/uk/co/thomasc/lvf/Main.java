@@ -95,7 +95,7 @@ public class Main {
 					}
 					
 					// open TFL connection....
-					httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime");
+					httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime,ExpireTime");
 					HttpResponse response = client.execute(httpget);
 					is = response.getEntity().getContent();
 					final BufferedReader stream = new BufferedReader(new InputStreamReader(is));
