@@ -7,6 +7,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.WriteConcern;
+
+import uk.co.thomasc.lvf.Main;
+
 @ToString
 public class Destination {
 
@@ -24,6 +30,7 @@ public class Destination {
 				destinations.get(route).get(lineid).put(dirid, new HashMap<String, Destination>());
 			}
 			if (!destinations.get(route).get(lineid).get(dirid).containsKey(destination)) {
+				Main.mongo.update("lvf_destinations", new BasicDBObject().append("route", route).append("lineid", lineid).append("direction", dirid).append("destination", destination), new BasicDBObject().append("$setOnInsert", new BasicDBObject("day", "SD").append("dest_cnt", 0)), true, false, WriteConcern.UNACKNOWLEDGED);
 				destinations.get(route).get(lineid).get(dirid).put(destination, new Destination(destination));
 			}
 			

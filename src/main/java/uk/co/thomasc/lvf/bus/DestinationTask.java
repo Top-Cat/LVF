@@ -46,7 +46,7 @@ public class DestinationTask extends TimerTask {
 						}
 						// If largest is SD and we haven't seen the real one, inc
 						if (!seenReal) {
-							DBObject obj = Main.mongo.findAndModify("lvf_destinations", new BasicDBObject().append("route", route).append("lineid", lineid).append("direction", dirid).append("destination", largest.getDestination()), new BasicDBObject("largest", 1), new BasicDBObject().append("$set", new BasicDBObject("dest_cnt", largest.getCount())).append("$inc", new BasicDBObject("largest", 1)), true, true);
+							DBObject obj = Main.mongo.findAndModify("lvf_destinations", new BasicDBObject().append("route", route).append("lineid", lineid).append("direction", dirid).append("destination", largest.getDestination()), new BasicDBObject("largest", 1), new BasicDBObject().append("$setOnInsert", new BasicDBObject("day", "SD")).append("$set", new BasicDBObject("dest_cnt", largest.getCount())).append("$inc", new BasicDBObject("largest", 1)), true, true);
 							if ((Integer) obj.get("largest") > 2) {
 								Main.mongo.debug("New destination? Route: " + route + ", LineID: " + lineid + ", Dir: " + dirid + ", " + largest);
 							}
