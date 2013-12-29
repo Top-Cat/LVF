@@ -29,6 +29,7 @@ import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
 
 import uk.co.thomasc.lvf.bus.Bus;
+import uk.co.thomasc.lvf.bus.DestinationTask;
 import uk.co.thomasc.lvf.task.Tasks;
 
 public class Main {
@@ -41,6 +42,7 @@ public class Main {
 	public static int backoff = 2500;
 	private Stats stats = new Stats();
 	private Tasks tasks;
+	private DestinationTask destTask;
 	
 	public Main() {
 		JsonParser parser = new JsonParser();
@@ -49,6 +51,7 @@ public class Main {
 		JsonObject login = (JsonObject) parser.parse(new InputStreamReader(this.getClass().getResourceAsStream("/login.json")));
 		mongo = new Mongo(login);	//login to database
 		tasks = new Tasks();		//set task handler
+		destTask = new DestinationTask();
 		
 		if (mongo.isMaster()) {
 			DefaultHttpClient client = new DefaultHttpClient();
@@ -163,6 +166,7 @@ public class Main {
 		}
 		stats.finish();
 		tasks.finish();
+		destTask.finish();
 	}
 	
 	public static Date midnight() {

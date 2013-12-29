@@ -7,7 +7,6 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.Random;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
@@ -21,7 +20,6 @@ import uk.co.thomasc.lvf.TFL;
 
 public class Bus {
 	
-	private static Random rand = new Random();
 	private static Map<Integer, Bus> singleton = new HashMap<Integer, Bus>();
 	private static Map<Integer, Bus> singletonUvi = new HashMap<Integer, Bus>();
 	private static PriorityQueue<Bus> queue = new PriorityQueue<Bus>(11, new Comparator<Bus>() {
@@ -298,9 +296,7 @@ public class Bus {
 			Prediction pred = predictions.peek();
 			updateHistory(pred.getKeytime(), pred.getTime(), pred.getRoute(), pred.getLineid());
 			Main.mongo.update("lvf_vehicles", new BasicDBObject("vid", this.vid), new BasicDBObject("$set", new BasicDBObject("whereseen", pred.toDbObject())), false, false, WriteConcern.UNACKNOWLEDGED);
-			if (rand.nextInt(100) == 0) {
-				Main.mongo.update("lvf_destinations", new BasicDBObject().append("route", pred.getRoute()).append("lineid", pred.getLineid()).append("direction", pred.getDirid()).append("destination", pred.getDest()), new BasicDBObject().append("$setOnInsert", new BasicDBObject("day", "SD")).append("$inc", new BasicDBObject("dest_cnt", 1)), true, false, WriteConcern.UNACKNOWLEDGED);
-			}
+			Destination.incrementCount(pred.getRoute(), pred.getLineid(), pred.getDirid(), pred.getDest());
 			
 			queue.offer(this);
 		}

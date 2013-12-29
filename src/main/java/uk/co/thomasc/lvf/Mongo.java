@@ -131,12 +131,20 @@ public class Mongo {
 		return ((Number) obj.get("seq")).intValue();
 	}
 
+	public void debug(String string) {
+		insert("lvf_audit", new BasicDBObject().append("text", string).append("level", true));
+	}
+
 	public void debug(String string, int uvi) {
 		insert("lvf_audit", new BasicDBObject().append("text", string).append("level", true).append("uvi", uvi));
 	}
 
 	public DBObject findAndModify(String collection, DBObject query, DBObject update) {
 		return buspicsDB.getCollection(collection).findAndModify(query, update);
+	}
+	
+	public DBObject findAndModify(String collection, DBObject query, DBObject fields, DBObject update, boolean returnNew, boolean upsert) {
+		return buspicsDB.getCollection(collection).findAndModify(query, fields, null, false, update, returnNew, upsert);
 	}
 
 }
