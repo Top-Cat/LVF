@@ -73,6 +73,7 @@ public class Bus {
 		if (vehicle != null) {
 			this.reg = (String) vehicle.get("cdreg");
 			this.uvi = (Integer) vehicle.get("uvi");
+			singletonUvi.put(this.uvi, this);
 		} else {
 			// Vehicle doesn't exist!
 			exists = false;
