@@ -11,6 +11,7 @@ public class Stats extends Thread {
 	
 	private boolean running = true;
 	private int rows = 0;
+	private int interesting = 0;
 	private int i = 0;
 	private static Map<String, AtomicInteger> stats = new HashMap<String, AtomicInteger>();
 	
@@ -22,6 +23,10 @@ public class Stats extends Thread {
 		rows++;
 	}
 	
+	public void incInteresting() {
+		interesting++;
+	}
+	
 	@Override
 	public void run() {
 		while (running) {
@@ -29,8 +34,9 @@ public class Stats extends Thread {
 				sleep(1000);
 				
 				if (rows > 0) {
-					System.out.println("Rows: " + rows + "\r");
+					System.out.println("Rows: " + interesting + "/" + rows + "\r");
 					rows = 0;
+					interesting = 0;
 					Main.backoff = 5000;
 				}
 				
