@@ -239,7 +239,9 @@ public class Bus {
 		predictions.clear();
 		queue.remove(this);
 		DBObject oldVehicle = Main.mongo.findAndModify("lvf_vehicles", vehicle, new BasicDBObject("$unset", new BasicDBObject().append("vid", 1).append("cdreg", 1).append("whereseen", 1)));
-		Main.mongo.debug("Withdrawn vehicle (" + oldVehicle.get("cur_reg") + ")", (Integer) oldVehicle.get("uvi"));
+		if (oldVehicle != null) {
+			Main.mongo.debug("Withdrawn vehicle (" + oldVehicle.get("cur_reg") + ")", (Integer) oldVehicle.get("uvi"));
+		}
 		return oldVehicle;
 	}
 	
