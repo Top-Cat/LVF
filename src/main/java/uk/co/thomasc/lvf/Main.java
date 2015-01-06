@@ -21,38 +21,38 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
 import uk.co.thomasc.lvf.bus.Bus;
 import uk.co.thomasc.lvf.task.Tasks;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 public class Main {
-	
+
 	public static void main(String[] args) throws Exception {
 		new Main();
 	}
-	
+
 	public static Logger logger = Logger.getLogger("LVF Main");
 	public static Sql sql;
 	public static int backoff = 2500;
-	private Stats stats = new Stats();
+	private final Stats stats = new Stats();
 	private Tasks tasks;
-	
+
 	public Main() throws Exception {
 		logger.setLevel(Level.ALL);
-		
-		JsonParser parser = new JsonParser();
-		
+
+		final JsonParser parser = new JsonParser();
+
 		// Read username-password from login.json
-		JsonObject login = (JsonObject) parser.parse(new InputStreamReader(this.getClass().getResourceAsStream("/login.json")));
-		sql = new Sql((JsonObject) login.get("sql"));	//login to database
-		tasks = new Tasks();							//set task handler
-		
-		DefaultHttpClient client = new DefaultHttpClient();
-		Credentials defaultcreds = new UsernamePasswordCredentials(((JsonObject) login.get("tfl")).get("user").getAsString(), ((JsonObject) login.get("tfl")).get("pass").getAsString());
+		final JsonObject login = (JsonObject) parser.parse(new InputStreamReader(this.getClass().getResourceAsStream("/login.json")));
+		sql = new Sql((JsonObject) login.get("sql")); // login to database
+		this.tasks = new Tasks(); // set task handler
+
+		final DefaultHttpClient client = new DefaultHttpClient();
+		final Credentials defaultcreds = new UsernamePasswordCredentials(((JsonObject) login.get("tfl")).get("user").getAsString(), ((JsonObject) login.get("tfl")).get("pass").getAsString());
 		client.getCredentialsProvider().setCredentials(new AuthScope("countdown.api.tfl.gov.uk", 80), defaultcreds);
-		
+
 		// read vehicles table, that are active (have vids), read cdreg, uvi & vid
 		PreparedStatement stmt = sql.query("SELECT cdreg, uvi, vid FROM lvf_vehicles WHERE vid IS NOT NULL");
 		ResultSet c = stmt.getResultSet();
@@ -63,20 +63,20 @@ public class Main {
 		}
 		logger.log(Level.INFO, "Loaded " + loaded + " vehicles");
 		stmt.close();
-		
+
 		// load current day history records for active vehicles
 		stmt = sql.query("SELECT * FROM lvf_route_day WHERE date = CURDATE() ORDER BY vid ASC");
 		c = stmt.getResultSet();
 		while (c.next()) {
-			Bus bus = Bus.getFromUvi(c.getInt("vid"));
+			final Bus bus = Bus.getFromUvi(c.getInt("vid"));
 			if (bus != null) {
 				bus.initHistory(c);
 			}
 		}
 		stmt.close();
-		
+
 		logger.log(Level.INFO, "Finished Loading");
-		
+
 		while (true) {
 			InputStream is = null;
 			HttpGet httpget = null;
@@ -84,68 +84,63 @@ public class Main {
 			try {
 				// Wait a bit before retrying
 				if (backoff > 2500) {
-					logger.log(Level.INFO, "Connection error! Waiting " + (backoff / 1000) + " seconds before trying again");
+					logger.log(Level.INFO, "Connection error! Waiting " + backoff / 1000 + " seconds before trying again");
 				}
 				Thread.sleep(backoff);
 				if (backoff < 320000) {
 					backoff *= 2;
 				}
-				
+
 				// open TFL connection....
 				httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime,ExpireTime");
-				HttpResponse response = client.execute(httpget);
+				final HttpResponse response = client.execute(httpget);
 				is = response.getEntity().getContent();
 				final BufferedReader stream = new BufferedReader(new InputStreamReader(is));
 				String inputLine;
-				Callable<String> readTask = new Callable<String>() {
+				final Callable<String> readTask = new Callable<String>() {
 					@Override
 					public String call() throws Exception {
 						return stream.readLine();
 					}
 				};
-				ExecutorService executor = Executors.newFixedThreadPool(1);
+				final ExecutorService executor = Executors.newFixedThreadPool(1);
 				do {
 					future = executor.submit(readTask);
 					inputLine = future.get(30000, TimeUnit.MILLISECONDS);
 					if (inputLine != null) {
 						// here when line read from TFL
-						if (tasks.hasTasks()) {
-							JsonObject[] tsks = tasks.getTasks();
-							for (JsonObject task : tsks) {
+						if (this.tasks.hasTasks()) {
+							final JsonObject[] tsks = this.tasks.getTasks();
+							for (final JsonObject task : tsks) {
 								try {
-									Bus bus = Bus.getFromUvi(task.get("uvi").getAsInt());
+									final Bus bus = Bus.getFromUvi(task.get("uvi").getAsInt());
 									if (bus != null) {
 										bus.performTask(task.get("task").getAsString(), (JsonObject) task.get("extra"));
 									}
-									tasks.completed(c.getInt("id"));
-								} catch (Exception e) {
-									tasks.failed(c.getInt("id"), e);
+									this.tasks.completed(c.getInt("id"));
+								} catch (final Exception e) {
+									this.tasks.failed(c.getInt("id"), e);
 								}
 							}
 						}
-						
+
 						// here to process TFL lines
-						TFL tfl = new TFL(parser.parse(inputLine));
-						stats.incRows();
+						final TFL tfl = new TFL(parser.parse(inputLine));
+						this.stats.incRows();
 						if (tfl.getType() == 1) {
 							try {
 								if (Bus.getFromVid(tfl.getVid()).newData(tfl)) {
-									stats.incInteresting();
-									sql.update(
-											"REPLACE INTO lvf_predictions " +
-											"(vid, stopid, visit, destination, route, line_id, prediction, dirid, valid) " + 
-											"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-											tfl.toDbObject()
-									);
+									this.stats.incInteresting();
+									sql.update("REPLACE INTO lvf_predictions " + "(vid, stopid, visit, destination, route, line_id, prediction, dirid, valid) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", tfl.toDbObject());
 								}
-							} catch (Exception e) {
+							} catch (final Exception e) {
 								Main.logger.log(Level.SEVERE, "Error processing row: " + tfl, e);
 								throw e;
 							}
 						}
 					}
 				} while (inputLine != null);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				Main.logger.log(Level.SEVERE, "Error in outer catch. Bad.", e);
 			} finally {
 				if (httpget != null) {
@@ -157,15 +152,15 @@ public class Main {
 				if (is != null) {
 					try {
 						is.close();
-					} catch (IOException e) {
+					} catch (final IOException e) {
 						Main.logger.log(Level.WARNING, "Error closing input stream", e);
 					}
 				}
 			}
 		}
-		
-		//stats.finish(); Unreachable, which is good
-		//tasks.finish();
-		//destTask.finish();
+
+		// stats.finish(); Unreachable, which is good
+		// tasks.finish();
+		// destTask.finish();
 	}
 }

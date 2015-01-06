@@ -1,12 +1,12 @@
 package uk.co.thomasc.lvf;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
@@ -14,43 +14,43 @@ import com.google.gson.JsonObject;
 
 public class Sql {
 
-	private String url;
+	private final String url;
 	private Connection conn;
 
 	public Sql(JsonObject sql) {
-		url = "jdbc:mysql://" + sql.get("server").getAsString() + "/" + sql.get("db").getAsString() + "?user=" + sql.get("user").getAsString() + "&password=" + sql.get("pass").getAsString() + "&autoReconnect=true&failOverReadOnly=false&maxReconnects=10";
-		
+		this.url = "jdbc:mysql://" + sql.get("server").getAsString() + "/" + sql.get("db").getAsString() + "?user=" + sql.get("user").getAsString() + "&password=" + sql.get("pass").getAsString() + "&autoReconnect=true&failOverReadOnly=false&maxReconnects=10";
+
 		try {
 			Main.logger.log(Level.INFO, "Connecting to SQL server");
-			reconnect();
+			this.reconnect();
 			Main.logger.log(Level.INFO, "Connected");
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			Main.logger.log(Level.WARNING, "Error connecting to SQL server", e);
 		}
 	}
 
 	private void reconnect() throws Exception {
 		Class.forName("com.mysql.jdbc.Driver").newInstance();
-		this.conn = DriverManager.getConnection(url);
+		this.conn = DriverManager.getConnection(this.url);
 	}
 
 	private boolean checkConnection() throws SQLException {
-		return conn != null && !conn.isClosed();
+		return this.conn != null && !this.conn.isClosed();
 	}
 
 	private void checkAndFix() throws Exception {
-		if (!checkConnection()) {
-			reconnect();
+		if (!this.checkConnection()) {
+			this.reconnect();
 		}
 	}
 
 	public void update(String sql) {
 		this.update(sql, null);
 	}
-	
+
 	public void update(String sql, Object[] values) {
 		try {
-			checkAndFix();
+			this.checkAndFix();
 			final PreparedStatement pr = this.conn.prepareStatement(sql);
 			if (values != null) {
 				for (int i = 1; i <= values.length; i++) {
@@ -63,14 +63,14 @@ public class Sql {
 			Main.logger.log(Level.WARNING, "Error performing SQL update (" + sql + ")", e);
 		}
 	}
-	
+
 	public void insert(String sql) {
 		this.insert(sql, null);
 	}
 
 	public void insert(String sql, Object[] values) {
 		try {
-			checkAndFix();
+			this.checkAndFix();
 			final PreparedStatement pr = this.conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			if (values != null) {
 				for (int i = 1; i <= values.length; i++) {
@@ -90,7 +90,7 @@ public class Sql {
 
 	public PreparedStatement query(String sql, Object[] values) {
 		try {
-			checkAndFix();
+			this.checkAndFix();
 			final PreparedStatement pr = this.conn.prepareStatement(sql);
 			if (values != null) {
 				for (int i = 1; i <= values.length; i++) {

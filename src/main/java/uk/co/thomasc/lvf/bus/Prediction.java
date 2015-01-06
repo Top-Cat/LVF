@@ -7,7 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-@AllArgsConstructor @ToString
+@AllArgsConstructor
+@ToString
 public class Prediction {
 
 	@Getter @Setter private String route;
@@ -20,9 +21,9 @@ public class Prediction {
 	@Getter @Setter private int dirid;
 	@Getter @Setter private String dest;
 	@Getter @Setter private int visit;
-	
+
 	public Object[] toDbObject(int vid) {
-		return new Object[] {vid, route, lineid, time, stop, dirid, dest, visit};
+		return new Object[] {vid, this.route, this.lineid, this.time, this.stop, this.dirid, this.dest, this.visit};
 	}
-	
+
 }

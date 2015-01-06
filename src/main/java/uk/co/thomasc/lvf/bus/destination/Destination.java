@@ -6,17 +6,17 @@ import lombok.ToString;
 
 @ToString
 public class Destination {
-	
+
 	@Getter @Setter private int count;
-	@Getter private String destination;
-	
+	@Getter private final String destination;
+
 	public Destination(String destination) {
 		this.destination = destination;
 	}
-	
+
 	Destination incCount() {
-		count++;
+		this.count++;
 		return this;
 	}
-	
+
 }

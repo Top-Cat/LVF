@@ -8,9 +8,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@EqualsAndHashCode @AllArgsConstructor @NoArgsConstructor
+@EqualsAndHashCode
+@AllArgsConstructor
+@NoArgsConstructor
 public class History {
-	
+
 	@Getter @Setter private Date firstSeen, lastSeen;
-	
+
 }
