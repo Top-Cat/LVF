@@ -22,6 +22,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import uk.co.thomasc.lvf.bus.Bus;
+import uk.co.thomasc.lvf.bus.destination.DestinationTask;
 import uk.co.thomasc.lvf.task.Tasks;
 
 import com.google.gson.JsonObject;
@@ -48,6 +49,7 @@ public class Main {
 		final JsonObject login = (JsonObject) parser.parse(new InputStreamReader(this.getClass().getResourceAsStream("/login.json")));
 		sql = new Sql((JsonObject) login.get("sql")); // login to database
 		this.tasks = new Tasks(); // set task handler
+		new DestinationTask();
 
 		final DefaultHttpClient client = new DefaultHttpClient();
 		final Credentials defaultcreds = new UsernamePasswordCredentials(((JsonObject) login.get("tfl")).get("user").getAsString(), ((JsonObject) login.get("tfl")).get("pass").getAsString());

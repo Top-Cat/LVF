@@ -30,7 +30,7 @@ public class DestinationTask extends TimerTask {
 	private final Timer t = new Timer();
 
 	public DestinationTask() {
-		final int period = 1 * 60 * 60 * 1000;
+		final int period = 24 * 60 * 60 * 1000; // 24 hours
 		this.t.schedule(this, period, period);
 	}
 
