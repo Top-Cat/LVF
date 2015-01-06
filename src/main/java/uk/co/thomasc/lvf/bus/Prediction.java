@@ -7,9 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-
 @AllArgsConstructor @ToString
 public class Prediction {
 
@@ -22,9 +19,10 @@ public class Prediction {
 	@Getter @Setter private String stop;
 	@Getter @Setter private int dirid;
 	@Getter @Setter private String dest;
+	@Getter @Setter private int visit;
 	
-	public DBObject toDbObject() {
-		return new BasicDBObject().append("route", route).append("line_id", lineid).append("last_seen", time).append("nearest_stop", stop).append("dirid", dirid).append("destination", dest);
+	public Object[] toDbObject(int vid) {
+		return new Object[] {vid, route, lineid, time, stop, dirid, dest, visit};
 	}
 	
 }

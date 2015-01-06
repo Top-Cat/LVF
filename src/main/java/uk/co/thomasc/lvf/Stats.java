@@ -4,8 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.mongodb.BasicDBObject;
+import java.util.logging.Level;
 
 public class Stats extends Thread {
 	
@@ -34,7 +33,7 @@ public class Stats extends Thread {
 				sleep(1000);
 				
 				if (rows > 0) {
-					System.out.println("Rows: " + interesting + "/" + rows + "\r");
+					Main.logger.log(Level.INFO, "Rows: " + interesting + "/" + rows + "\r");
 					rows = 0;
 					interesting = 0;
 					Main.backoff = 5000;
@@ -42,24 +41,15 @@ public class Stats extends Thread {
 				
 				if (++i % 60 == 0) {
 					i = 0;
-					BasicDBObject statsUpdate = new BasicDBObject();
 					for (Entry<String, AtomicInteger> entry : stats.entrySet()) {
 						int val = entry.getValue().getAndSet(0);
 						if (val > 0) {
-							statsUpdate.append(entry.getKey(), entry.getValue().getAndSet(0));
+							Main.sql.update("INSERT INTO lvf_stats (stat, date, count) VALUES (?, CURDATE(), ?) ON DUPLICATE KEY UPDATE count = count + ?", new Object[] {entry.getKey(), val, val});
 						}
-					}
-					if (!statsUpdate.isEmpty()) {
-						Main.mongo.update(
-							"lvf_stats",
-							new BasicDBObject("date", Main.midnight()),
-							new BasicDBObject("$inc", statsUpdate),
-							true
-						);
 					}
 				}
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				Main.logger.log(Level.WARNING, "Stats task interrupted", e);
 			}
 		}
 	}

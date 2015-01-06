@@ -22,7 +22,6 @@ public class TFL {
 	@Getter private String dest;
 	@Getter private int vid;
 	@Getter private String reg;
-	@Getter private boolean expired;
 	@Getter private boolean valid;
 	
 	@Getter private Date time;
@@ -51,6 +50,10 @@ public class TFL {
 		} else if (type == 1) {
 			type = -1;
 		}
+	}
+	
+	public Object[] toDbObject() {
+		return new Object[] {vid, stop, visit, dest, route, lineid, time, dirid, valid};
 	}
 	
 }
