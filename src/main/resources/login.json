@@ -1,7 +1,7 @@
 {
 	sql: {
 		server: '%sql_server%',
-		user: '$sql_user%',
+		user: '%sql_user%',
 		pass: '%sql_pass%',
 		db: '%sql_db%'
 	},

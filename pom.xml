@@ -75,6 +75,10 @@
 					<file>target/classes/login.json</file>
 					<replacements>
 						<replacement>
+							<token>%sql_server%</token>
+							<value>${sql.server}</value>
+						</replacement>
+						<replacement>
 							<token>%sql_user%</token>
 							<value>${sql.user}</value>
 						</replacement>
