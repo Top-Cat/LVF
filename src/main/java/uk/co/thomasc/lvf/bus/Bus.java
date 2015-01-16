@@ -182,7 +182,7 @@ public class Bus {
 			final HistoryKey key = new HistoryKey(date, lineid, route);
 
 			if (!this.history.containsKey(key)) {
-				final PreparedStatement stmt = Main.sql.query("SELECT * FROM lvf_route_day WHERE vid = ? AND date = CURDATE() AND route = ? AND lineid = ? LIMIT 1", new Object[] {this.uvi, route, lineid});
+				final PreparedStatement stmt = Main.sql.query("SELECT * FROM lvf_route_day WHERE vid = ? AND date = ? AND route = ? AND lineid = ? LIMIT 1", new Object[] {this.uvi, new java.sql.Date(time.getTime()), route, lineid});
 				final ResultSet r = stmt.getResultSet();
 
 				final History hist = new History();
@@ -208,7 +208,7 @@ public class Bus {
 			}
 
 			if (update) {
-				Main.sql.update("REPLACE INTO lvf_route_day (vid, lineid, route, date, first_seen, last_seen) VALUES (?, ?, ?, CURDATE(), ?, ?)", new Object[] {this.uvi, lineid, route, new java.sql.Time(this.history.get(key).getFirstSeen().getTime()), new java.sql.Time(this.history.get(key).getLastSeen().getTime())});
+				Main.sql.update("REPLACE INTO lvf_route_day (vid, lineid, route, date, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?)", new Object[] {this.uvi, lineid, route, new java.sql.Date(time.getTime()), new java.sql.Time(this.history.get(key).getFirstSeen().getTime()), new java.sql.Time(this.history.get(key).getLastSeen().getTime())});
 			}
 		} catch (final SQLException e) {
 			Main.logger.log(Level.WARNING, "Error updating history", e);
