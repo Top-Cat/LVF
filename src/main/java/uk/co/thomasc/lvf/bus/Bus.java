@@ -208,7 +208,7 @@ public class Bus {
 			}
 
 			if (update) {
-				Main.sql.update("REPLACE INTO lvf_route_day (vid, lineid, route, date, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?)", new Object[] {this.uvi, lineid, route, new java.sql.Date(time.getTime()), new java.sql.Time(this.history.get(key).getFirstSeen().getTime()), new java.sql.Time(this.history.get(key).getLastSeen().getTime())});
+				Main.sql.update("REPLACE INTO lvf_route_day (vid, lineid, route, date, first_seen, last_seen, registration) VALUES (?, ?, ?, ?, ?, ?, ?)", new Object[] {this.uvi, lineid, route, new java.sql.Date(time.getTime()), new java.sql.Time(this.history.get(key).getFirstSeen().getTime()), new java.sql.Time(this.history.get(key).getLastSeen().getTime()), this.reg});
 			}
 		} catch (final SQLException e) {
 			Main.logger.log(Level.WARNING, "Error updating history", e);
