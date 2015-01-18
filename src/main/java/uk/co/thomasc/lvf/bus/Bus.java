@@ -353,7 +353,7 @@ public class Bus {
 		if (!this.predictions.isEmpty()) {
 			final Prediction pred = this.predictions.peek();
 			this.updateHistory(pred.getKeytime(), pred.getTime(), pred.getRoute(), pred.getLineid());
-			Main.sql.update("REPLACE INTO lvf_where_seen (vid, route, lineid, last_seen, nearest_stop, dirid, destination, visit) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", pred.toDbObject(this.vid));
+			Main.sql.update("REPLACE INTO lvf_where_seen (vid, route, lineid, last_seen, nearest_stop, dirid, destination, visit) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", pred.toDbObject(this.uvi));
 			DestinationTask.incrementCount(pred.getRoute(), pred.getLineid(), pred.getDirid(), pred.getDest());
 
 			queue.offer(this);
