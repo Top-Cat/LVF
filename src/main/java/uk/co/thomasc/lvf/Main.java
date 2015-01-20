@@ -22,6 +22,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import uk.co.thomasc.lvf.bus.Bus;
+import uk.co.thomasc.lvf.bus.Stops;
 import uk.co.thomasc.lvf.bus.destination.DestinationTask;
 import uk.co.thomasc.lvf.task.Tasks;
 
@@ -36,6 +37,7 @@ public class Main {
 
 	public static Logger logger = Logger.getLogger("LVF Main");
 	public static Sql sql;
+	public static Stops stops;
 	public static int backoff = 2500;
 	private final Stats stats = new Stats();
 	private Tasks tasks;
@@ -48,6 +50,7 @@ public class Main {
 		// Read username-password from login.json
 		final JsonObject login = (JsonObject) parser.parse(new InputStreamReader(this.getClass().getResourceAsStream("/login.json")));
 		sql = new Sql((JsonObject) login.get("sql")); // login to database
+		stops = new Stops();
 		this.tasks = new Tasks(); // set task handler
 		new DestinationTask();
 
@@ -94,7 +97,7 @@ public class Main {
 				}
 
 				// open TFL connection....
-				httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime,ExpireTime");
+				httpget = new HttpGet("http://countdown.api.tfl.gov.uk/interfaces/ura/stream_V1?ReturnList=StopPointName,StopID,StopCode1,VisitNumber,LineId,LineName,DirectionId,destinationtext,VehicleId,RegistrationNumber,EstimatedTime,ExpireTime");
 				final HttpResponse response = client.execute(httpget);
 				is = response.getEntity().getContent();
 				final BufferedReader stream = new BufferedReader(new InputStreamReader(is));
@@ -131,9 +134,10 @@ public class Main {
 						this.stats.incRows();
 						if (tfl.getType() == 1) {
 							try {
+								stops.stop(tfl.getStop(), tfl.getStopName(), tfl.getLbsl());
 								if (Bus.getFromVid(tfl.getVid()).newData(tfl)) {
 									this.stats.incInteresting();
-									sql.update("REPLACE INTO lvf_predictions " + "(vid, stopid, visit, destination, route, line_id, prediction, dirid, valid) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", tfl.toDbObject());
+									sql.update("REPLACE INTO lvf_predictions (vid, stopid, visit, destination, route, line_id, prediction, dirid, valid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", tfl.toDbObject());
 								}
 							} catch (final Exception e) {
 								Main.logger.log(Level.SEVERE, "Error processing row: " + tfl, e);

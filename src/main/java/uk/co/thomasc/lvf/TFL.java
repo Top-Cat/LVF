@@ -23,6 +23,8 @@ public class TFL {
 	@Getter private int vid;
 	@Getter private String reg;
 	@Getter private boolean valid;
+	@Getter private String lbsl;
+	@Getter private String stopName;
 
 	@Getter private Date time;
 	@Getter private String keytime;
@@ -35,16 +37,18 @@ public class TFL {
 		final JsonArray arr = (JsonArray) json;
 		this.type = arr.get(0).getAsInt();
 		if (this.type == 1 && !(arr.get(1) instanceof JsonNull)) {
-			this.stop = arr.get(1).getAsString();
-			this.visit = arr.get(2).getAsInt();
-			this.lineid = arr.get(3).getAsString();
-			this.route = arr.get(4).getAsString();
-			this.dirid = arr.get(5).getAsInt();
-			this.dest = arr.get(6).getAsString();
-			this.vid = arr.get(7).getAsInt();
-			this.reg = arr.get(8).getAsString();
-			this.time = new Date(arr.get(9).getAsLong());
-			this.valid = arr.get(10).getAsLong() != 0;
+			this.stopName = arr.get(1).getAsString();
+			this.lbsl = arr.get(2).getAsString();
+			this.stop = arr.get(3).getAsString();
+			this.visit = arr.get(4).getAsInt();
+			this.lineid = arr.get(5).getAsString();
+			this.route = arr.get(6).getAsString();
+			this.dirid = arr.get(7).getAsInt();
+			this.dest = arr.get(8).getAsString();
+			this.vid = arr.get(9).getAsInt();
+			this.reg = arr.get(10).getAsString();
+			this.time = new Date(arr.get(11).getAsLong());
+			this.valid = arr.get(12).getAsLong() != 0;
 			this.keytime = dateFormat.format(this.time);
 			this.difftime = diffDateFormat.format(this.time);
 		} else if (this.type == 1) {
