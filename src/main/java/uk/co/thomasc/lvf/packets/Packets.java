@@ -8,10 +8,9 @@ import lombok.Getter;
 
 public enum Packets {
 	Packet0Kill(0, Packet0Kill.class),
-	Packet1Withdraw(1, Packet1Withdraw.class, true),
-	Packet2Delete(2, Packet2Delete.class, true),
-	Packet3Merge(3, Packet3Merge.class, true),
-	Packet4Result(4, Packet4Result.class, true),
+	Packet1Result(1, Packet1Result.class, true),
+	Packet2FlushAll(2, Packet2FlushAll.class, true),
+	Packet3Flush(3, Packet3Flush.class, true),
 	;
 	
 	@Getter private int id;

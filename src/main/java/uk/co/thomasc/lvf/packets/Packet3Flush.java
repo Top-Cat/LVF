@@ -2,31 +2,20 @@ package uk.co.thomasc.lvf.packets;
 
 import java.io.IOException;
 
-import lombok.Getter;
-import lombok.Setter;
 import uk.co.thomasc.lvf.network.BinaryReader;
-import uk.co.thomasc.lvf.network.BinaryWriter;
 
-public class Packet3Merge extends TaskPacket {
+public class Packet3Flush extends BusPacket {
 	
-	@Getter @Setter private int newUvi;
-	
-	public Packet3Merge() {
+	public Packet3Flush() {
 		
 	}
 	
 	public void readPacket(BinaryReader input) throws IOException {
 		super.readPacket(input);
-		setNewUvi(input.readInt());
 	}
 
 	public byte[] getBytes() throws IOException {
-		BinaryWriter bw = new BinaryWriter();
-		
-		bw.write(super.getBytes());
-		bw.write(getNewUvi());
-		
-		return bw.toByteArray();
+		return super.getBytes();
 	}
 
 	public int getId() {

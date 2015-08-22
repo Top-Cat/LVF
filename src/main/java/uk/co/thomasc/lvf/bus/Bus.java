@@ -17,9 +17,8 @@ import uk.co.thomasc.lvf.Main;
 import uk.co.thomasc.lvf.Stats;
 import uk.co.thomasc.lvf.TFL;
 import uk.co.thomasc.lvf.bus.destination.DestinationTask;
-import uk.co.thomasc.lvf.packets.Packet1Withdraw;
-import uk.co.thomasc.lvf.packets.Packet2Delete;
-import uk.co.thomasc.lvf.packets.Packet3Merge;
+import uk.co.thomasc.lvf.packets.BusPacket;
+import uk.co.thomasc.lvf.packets.Packet3Flush;
 import uk.co.thomasc.lvf.packets.TaskPacket;
 
 /**
@@ -576,56 +575,41 @@ public class Bus {
 	}
 
 	/**
-	 * Merge the passed data from another vehicle with this one
-	 * @param vid2 The vid of the other vehicle
-	 * @param reg2 The registration of the other vehicle
-	 * @param history2 The history loaded for the other vehicle
-	 * @param predictions2 The current predictions for the other vehicle
+	 * Clear all references to vehicle objects
+	 * and reload them from the database
+	 * 
+	 * This is far more costly than flushing vehicles individually
+	 * which should be done when possible
+	 * 
+	 * @throws SQLException Error when loading data
 	 */
-	private void mergeIn(int vid2, String reg2, Map<HistoryKey, History> history2, PriorityQueue<Prediction> predictions2) {
-		//TODO: We might not have loaded all history information
+	public static void flush() throws SQLException {
+		singleton.clear();
+		singletonUvi.clear();
+		queue.clear();
 		
-		this.exists = true;
-		this.reg = reg2;
-
-		singleton.remove(this.vid);
-		singleton.put(vid2, this);
-		this.vid = vid2;
-
-		// Merge predictions
-		while (!predictions2.isEmpty()) {
-			final Prediction pred = predictions2.poll();
-
-			if (this.pred_update.containsKey(pred.getStop())) {
-				this.predictions.remove(this.pred_update.get(pred.getStop()));
-			}
-
-			this.pred_update.put(pred.getStop(), pred);
-			this.predictions.offer(pred);
-		}
-		this.updateQueue();
-
-		// Merge history
-		for (final HistoryKey key : history2.keySet()) {
-			this.updateHistory(key.getDate(), history2.get(key).getFirstSeen(), key.getRoute(), key.getLineid());
-			this.updateHistory(key.getDate(), history2.get(key).getLastSeen(), key.getRoute(), key.getLineid());
-		}
-	}
-
-	/**
-	 * Load all history for this vehicle that might be updated
-	 * 
-	 * Ignores days before today,
-	 * if more than one row is returned that's super-spooky
-	 * 
-	 * @throws SQLException If it fails
-	 */
-	private void loadHistory() throws SQLException {
-		final PreparedStatement stmt = Main.sql.query("SELECT * FROM route_day WHERE vid = ? AND date >= CURDDATE()", new Object[] {this.uvi});
-		final ResultSet c = stmt.getResultSet();
+		// Read vehicles table, that are active (have vids),
+		// read cdreg, uvi & vid
+		// This speeds up startup where active vehicles would get loaded
+		// one at a time as they are referenced by updates
+		PreparedStatement stmt = Main.sql.query("SELECT cdreg, uvi, vid FROM vehicles WHERE vid IS NOT NULL");
+		ResultSet c = stmt.getResultSet();
+		int loaded = 0;
 		while (c.next()) {
-			this.updateHistory(TFL.dateFormat.format(c.getDate("date")), c.getTime("last_seen"), c.getString("route"), c.getString("lineid"));
-			this.updateHistory(TFL.dateFormat.format(c.getDate("date")), c.getTime("first_seen"), c.getString("route"), c.getString("lineid"));
+			loaded++;
+			new Bus(c);
+		}
+		Main.logger.log(Level.INFO, "Loaded " + loaded + " vehicles");
+		stmt.close();
+
+		// load current day history records for active vehicles
+		stmt = Main.sql.query("SELECT * FROM route_day WHERE date = current_date ORDER BY vid ASC");
+		c = stmt.getResultSet();
+		while (c.next()) {
+			final Bus bus = Bus.getFromUvi(c.getInt("vid"));
+			if (bus != null) {
+				bus.initHistory(c);
+			}
 		}
 		stmt.close();
 	}
@@ -635,42 +619,17 @@ public class Bus {
 	 * @param task The packet containing task parameters
 	 * @throws Exception Anything could happen
 	 */
-	public void performTask(TaskPacket task) throws Exception {
-		if (task instanceof Packet1Withdraw) {
-			// Very simple
-			this.withdrawVehicle();
-		} else if (task instanceof Packet2Delete) {
-			// First remove linked data
-			Main.sql.update("DELETE FROM history WHERE vid = ?", new Object[] {this.uvi});
-
-			// Now delete vehicle record
-			Main.sql.update("DELETE FROM where_seen WHERE vid = ?", new Object[] {this.uvi});
-			Main.sql.update("DELETE FROM vehicles WHERE uvi = ?", new Object[] {this.uvi});
-
+	public void performTask(BusPacket task) throws Exception {
+		if (task instanceof Packet3Flush) {
+			// Remove references to this object, it will be recreated when needed
 			singleton.remove(this.vid);
 			singletonUvi.remove(this.uvi);
+			queue.remove(this);
+			
 			this.exists = false;
 			this.reg = "";
 			this.vid = 0;
 			this.uvi = 0;
-		} else if (task instanceof Packet3Merge) {
-			final int newUvi = ((Packet3Merge) task).getNewUvi();
-			final Bus other = getFromUvi(newUvi);
-			if (other != null) {
-				Main.sql.update("UPDATE vehicles SET vid = ?, cdreg = ? WHERE uvi = ?", new Object[] {this.vid, this.reg, newUvi}); // Update old record
-				this.loadHistory();
-				other.mergeIn(this.vid, this.reg, this.history, this.predictions);
-
-				Main.sql.update("DELETE FROM history WHERE vid = ?", new Object[] {this.uvi}); // Delete new record (us)
-				Main.sql.update("DELETE FROM where_seen WHERE vid = ?", new Object[] {this.uvi});
-				Main.sql.update("DELETE FROM vehicles WHERE uvi = ?", new Object[] {this.uvi});
-
-				singletonUvi.remove(this.uvi);
-				this.exists = false;
-				this.reg = "";
-				this.vid = 0;
-				this.uvi = 0;
-			}
 		}
 	}
 

@@ -4,8 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,6 +25,10 @@ import uk.co.thomasc.lvf.bus.Bus;
 import uk.co.thomasc.lvf.bus.Stops;
 import uk.co.thomasc.lvf.bus.destination.DestinationTask;
 import uk.co.thomasc.lvf.network.TaskServer;
+import uk.co.thomasc.lvf.packets.BusPacket;
+import uk.co.thomasc.lvf.packets.Packet;
+import uk.co.thomasc.lvf.packets.Packet2FlushAll;
+import uk.co.thomasc.lvf.packets.Packet3Flush;
 import uk.co.thomasc.lvf.packets.TaskPacket;
 
 import com.google.gson.JsonObject;
@@ -112,30 +114,8 @@ public class Main {
 			final Credentials defaultcreds = new UsernamePasswordCredentials(((JsonObject) login.get("tfl")).get("user").getAsString(), ((JsonObject) login.get("tfl")).get("pass").getAsString());
 			client.getCredentialsProvider().setCredentials(new AuthScope("countdown.api.tfl.gov.uk", 80), defaultcreds);
 	
-			// Read vehicles table, that are active (have vids),
-			// read cdreg, uvi & vid
-			// This speeds up startup where active vehicles would get loaded
-			// one at a time as they are referenced by updates
-			PreparedStatement stmt = sql.query("SELECT cdreg, uvi, vid FROM vehicles WHERE vid IS NOT NULL");
-			ResultSet c = stmt.getResultSet();
-			int loaded = 0;
-			while (c.next()) {
-				loaded++;
-				new Bus(c);
-			}
-			logger.log(Level.INFO, "Loaded " + loaded + " vehicles");
-			stmt.close();
-	
-			// load current day history records for active vehicles
-			stmt = sql.query("SELECT * FROM route_day WHERE date = current_date ORDER BY vid ASC");
-			c = stmt.getResultSet();
-			while (c.next()) {
-				final Bus bus = Bus.getFromUvi(c.getInt("vid"));
-				if (bus != null) {
-					bus.initHistory(c);
-				}
-			}
-			stmt.close();
+			// Load initial bus data
+			Bus.flush();
 	
 			logger.log(Level.INFO, "Finished Loading");
 	
@@ -183,10 +163,14 @@ public class Main {
 							TaskPacket task = tasks.getTaskQueue().poll();
 							if (task != null) {
 								try {
-									final Bus bus = Bus.getFromUvi(task.getUvi());
-									if (bus != null) {
-										// Try to perform task
-										bus.performTask(task);
+									if (task instanceof BusPacket) {
+										final Bus bus = Bus.getFromUvi(((BusPacket) task).getUvi());
+										if (bus != null) {
+											// Try to perform task
+											bus.performTask((BusPacket) task);
+										}
+									} else if (task instanceof Packet2FlushAll) {
+										Bus.flush();
 									}
 									task.setSuccess(true);
 								} catch (Exception e) {

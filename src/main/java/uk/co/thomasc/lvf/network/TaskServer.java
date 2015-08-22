@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import uk.co.thomasc.lvf.packets.Packet;
 import uk.co.thomasc.lvf.packets.Packet0Kill;
-import uk.co.thomasc.lvf.packets.Packet4Result;
+import uk.co.thomasc.lvf.packets.Packet1Result;
 import uk.co.thomasc.lvf.packets.TaskPacket;
 
 public class TaskServer extends Thread {
@@ -41,7 +41,7 @@ public class TaskServer extends Thread {
 									if (taskQueue.offer((TaskPacket) packet, 1, TimeUnit.SECONDS)) {
 										packet.wait();
 										
-										Packet4Result result = new Packet4Result();
+										Packet1Result result = new Packet1Result();
 										result.setSuccess(((TaskPacket) packet).isSuccess());
 										Network.sendPacket(socket, result);
 									} else {

@@ -3,11 +3,10 @@ package uk.co.thomasc.lvf.packets;
 import java.io.IOException;
 
 import uk.co.thomasc.lvf.network.BinaryReader;
-import uk.co.thomasc.lvf.network.BinaryWriter;
 
-public class Packet1Withdraw extends TaskPacket {
+public class Packet2FlushAll extends TaskPacket {
 	
-	public Packet1Withdraw() {
+	public Packet2FlushAll() {
 		
 	}
 	
@@ -16,15 +15,11 @@ public class Packet1Withdraw extends TaskPacket {
 	}
 
 	public byte[] getBytes() throws IOException {
-		BinaryWriter bw = new BinaryWriter();
-		
-		bw.write(super.getBytes());
-		
-		return bw.toByteArray();
+		return super.getBytes();
 	}
 
 	public int getId() {
-		return 1;
+		return 2;
 	}
 	
 	public int getVersion() {

@@ -6,11 +6,11 @@ import lombok.Getter;
 import lombok.Setter;
 import uk.co.thomasc.lvf.network.BinaryReader;
 
-public class Packet4Result implements Packet {
+public class Packet1Result implements Packet {
 	
 	@Getter @Setter private boolean success;
 	
-	public Packet4Result() {
+	public Packet1Result() {
 		
 	}
 	
@@ -23,7 +23,7 @@ public class Packet4Result implements Packet {
 	}
 
 	public int getId() {
-		return 4;
+		return 1;
 	}
 	
 	public int getVersion() {
