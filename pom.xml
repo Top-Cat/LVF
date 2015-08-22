@@ -18,9 +18,9 @@
 			<version>2.2.2</version>
 		</dependency>
 		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>5.1.6</version>
+		<groupId>org.postgresql</groupId>
+		<artifactId>postgresql</artifactId>
+		<version>9.4-1201-jdbc41</version>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -32,6 +32,12 @@
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
 			<version>4.2.5</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<build>
@@ -129,7 +135,7 @@
 									</includes>
 								</filter>
 								<filter>
-									<artifact>mysql:*</artifact>
+									<artifact>org.postgresql:*</artifact>
 									<includes>
 										<include>**</include>
 									</includes>

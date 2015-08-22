@@ -47,10 +47,11 @@ public class DestinationTask extends TimerTask {
 				final Destination largest = map.getLargest();
 				if (largest.equals(map.getTopDest())) {
 					if (map.incCount() > 2) {
-						Main.sql.update("REPLACE INTO lvf_destinations (route, lineid, direction, destination) VALUES (?, ?, ?, ?)", new Object[] {key.getRoute(), key.getLineid(), key.getDirid(), largest.getDestination()});
+						// Function call does INSERT OR UPDATE, in future versions of postgres this will supported as actual SQL
+						Main.sql.update("{call update_destinations(?, ?, ?, ?)}", new Object[] {key.getRoute(), key.getLineid(), key.getDirid(), largest.getDestination()});
 					} else {
 						// In the case that this is a new or unknown route add a record
-						Main.sql.update("INSERT INTO lvf_destinations (route, lineid, direction, destination) VALUES (?, ?, ?, ?)", new Object[] {key.getRoute(), key.getLineid(), key.getDirid(), largest.getDestination()});
+						Main.sql.update("INSERT INTO destinations (route, lineid, direction, destination) VALUES (?, ?, ?, ?)", new Object[] {key.getRoute(), key.getLineid(), key.getDirid(), largest.getDestination()});
 					}
 				} else {
 					map.setTopDest(largest);
